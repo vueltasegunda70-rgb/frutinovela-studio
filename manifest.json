@@ -1,0 +1,12 @@
+
+{
+  "name": "Frutinovela Studio",
+  "short_name": "Frutinovela",
+  "description": "Crea historias de frutas, capítulos y escenas.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#100d18",
+  "theme_color": "#702b80"
+}
