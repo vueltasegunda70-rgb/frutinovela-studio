@@ -2,6 +2,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+ 
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#702b80">
+ 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#24132f">
@@ -156,4 +160,15 @@ $("saved").innerHTML=projects.length?projects.map((p,i)=>`<div class="scene"><b>
 loadProjects();
 </script>
 </body>
+  
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => console.log("Frutinovela Studio lista"))
+      .catch(error => console.error("Error:", error));
+  });
+}
+</script>
+
 </html>
