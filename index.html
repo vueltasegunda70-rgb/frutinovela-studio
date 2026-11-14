@@ -159,9 +159,7 @@ $("saved").innerHTML=projects.length?projects.map((p,i)=>`<div class="scene"><b>
 }
 loadProjects();
 </script>
-</body>
-  
-<script>
+ <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js")
@@ -169,6 +167,8 @@ if ("serviceWorker" in navigator) {
       .catch(error => console.error("Error:", error));
   });
 }
-</script>
+ </script>
+</body>
+  
 
 </html>
