@@ -1,0 +1,1 @@
+# frutinovela-studio
