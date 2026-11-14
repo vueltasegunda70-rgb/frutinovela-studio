@@ -100,38 +100,94 @@ const duration=Number($("duration").value);
 const idea=$("idea").value.trim()||"Un secreto amenaza con separar a los protagonistas.";
 if(chars.length===0){alert("Escribe al menos un personaje.");return;}
 
-const moments=[
-["GANCHO INICIAL","Algo inesperado está a punto de cambiar sus vidas."],
-["EL ENCUENTRO","Los protagonistas se encuentran y hablan de lo ocurrido."],
-["LA SOSPECHA","Uno de ellos descubre una pista que no esperaba."],
-["LA REVELACIÓN","Un personaje revela un secreto que cambia todo."],
-["EL CONFLICTO","Los protagonistas deben decidir en quién confiar."],
-["FINAL SORPRESA","Una noticia inesperada deja abierta la historia."]
+const plans=[
+[
+["LA INVITACIÓN INESPERADA","Una invitación anónima llega justo cuando todos se preparan para la fiesta del barrio.","¿Quién sabe tanto de mi vida como para enviarme esto?","sobre cerrado bajo la puerta"],
+["EL LUGAR VACÍO","En la fiesta, una silla reservada permanece vacía y tiene el nombre de uno de los protagonistas.","Esa silla estaba preparada para alguien que no debía venir.","fiesta de frutas con silla reservada vacía"],
+["LA PRIMERA PRUEBA","Dentro del sobre aparece una fotografía tomada esa misma mañana desde un lugar imposible.","Esta foto demuestra que alguien nos está vigilando.","fotografía misteriosa sobre una mesa"],
+["UNA PROMESA PELIGROSA","El grupo decide guardar silencio hasta descubrir quién envió la invitación.","Si nos está observando, acaba de cometer un error.","grupo reunido haciendo un pacto secreto"]
+],
+[
+["EL MENSAJE BORRADO","Un teléfono olvidado recibe una notificación y el mensaje desaparece antes de poder leerlo.","Alguien borró esto desde otro dispositivo.","teléfono iluminado con notificación misteriosa"],
+["LA COARTADA","La persona señalada asegura que estuvo en casa, pero dos testigos cuentan versiones distintas.","No puedes estar en dos lugares al mismo tiempo.","discusión frente a dos testigos"],
+["EL OBJETO PERDIDO","Aparece una llave escondida dentro de una caja que todos creían vacía.","Esta llave abre algo que llevamos años evitando.","llave antigua encontrada en caja"],
+["EL TRATO","Para conseguir respuestas, una protagonista acepta reunirse a solas con quien envió la nota.","Iré, pero esta vez yo pondré las condiciones.","encuentro secreto en callejón iluminado"]
+],
+[
+["LA REUNIÓN SECRETA","La cita comienza, pero una tercera persona escucha detrás de la puerta.","Sabía que vendrías; lo que no sabía era quién te seguía.","reunión clandestina con silueta escuchando"],
+["EL CAMBIO DE BANDO","Un aliado entrega una información decisiva a la persona equivocada.","No lo hice por dinero; lo hice para proteger a alguien.","traición entre amigos en habitación dramática"],
+["LA TRAMPA","El grupo prepara una falsa entrega para descubrir quién está filtrando sus planes.","Cuando aparezca, no lo enfrenten: graben todo.","preparación de una trampa con cámara escondida"],
+["LA HUIDA","La trampa se activa antes de tiempo y todos deben escapar por caminos distintos.","¡Nos descubrieron! ¡Salgan por la puerta de atrás!","huida cinematográfica por pasillo"]
+],
+[
+["LA CARTA ANTIGUA","Una carta guardada durante años revela que el conflicto comenzó mucho antes de lo que creían.","Esta letra es de alguien que juramos no volver a nombrar.","carta amarillenta abierta con cuidado"],
+["EL RECUERDO","Un recuerdo de infancia cambia el significado de una promesa familiar.","Ahora entiendo por qué nunca hablaban de aquella noche.","recuerdo emotivo de infancia en tonos cálidos"],
+["LA CONFESIÓN A MEDIAS","Un familiar admite haber ocultado la verdad, pero se niega a decir quién lo pidió.","Te conté una parte; la otra podría destruirnos.","confesión familiar en sala tenue"],
+["EL NOMBRE","En el reverso de la carta aparece el nombre de la persona que todos daban por desaparecida.","Está vivo... y sabe que encontramos la carta.","nombre escrito detrás de carta"]
+],
+[
+["EL ESCÁNDALO PÚBLICO","Un rumor se difunde durante un evento y deja a una protagonista frente a todos.","No voy a esconderme por una mentira que ustedes inventaron.","evento público con miradas sorprendidas"],
+["EL DESAFÍO","Para limpiar su nombre, exige que presenten la prueba delante de todos.","Si tienen pruebas, este es el momento de mostrarlas.","protagonista enfrentando a un grupo"],
+["LA PRUEBA ALTERADA","El video que debía demostrar la verdad aparece editado y contradice los hechos.","Ese video no está completo; alguien cortó la parte importante.","pantalla mostrando video interrumpido"],
+["EL TESTIGO","Una persona del público se ofrece a declarar, pero pide protección.","Yo vi quién entró primero. Y puedo demostrarlo.","testigo levantando la mano entre la multitud"]
+],
+[
+["LA ALIANZA FALSA","Dos rivales acuerdan cooperar, aunque cada uno prepara un plan secreto.","Trabajaremos juntos, pero no confundas eso con confianza.","dos rivales estrechando la mano con tensión"],
+["EL MAPA","Una pista conduce a un almacén y marca una hora exacta para encontrar el siguiente objeto.","Tenemos una sola oportunidad antes de que lo retiren.","mapa con ubicación marcada sobre mesa"],
+["LA ESCUCHA","Una conversación captada por accidente revela que el objeto ya fue trasladado.","No vamos al almacén. Nos están esperando allí.","personaje escuchando audio en auriculares"],
+["EL GIRO","La persona que parecía estar ayudando aparece en la grabación dando instrucciones al enemigo.","La voz es suya. Nos ha estado guiando hacia una trampa.","grabación revelando a un traidor"]
+],
+[
+["LA BÚSQUEDA","El grupo sigue una pista hasta un lugar abandonado donde alguien dejó señales recientes.","No está abandonado; alguien estuvo aquí hace minutos.","búsqueda en edificio abandonado"],
+["EL HALLAZGO","Detrás de una pared falsa encuentran el objeto que faltaba desde el primer capítulo.","Esto conecta la fotografía, la llave y la carta.","objeto oculto tras pared secreta"],
+["LA ACUSACIÓN","Dos personajes se enfrentan porque cada uno interpreta la evidencia de forma diferente.","Deja de protegerlo. La prueba está delante de nosotros.","discusión intensa junto a evidencia"],
+["EL ROBO","Antes de poder salir, una mano desconocida arrebata la prueba y desaparece.","¡Cierren las salidas! ¡No puede escapar!","mano misteriosa robando evidencia"]
+],
+[
+["LA DECISIÓN","Una protagonista puede recuperar la prueba o ayudar a un aliado herido, pero no ambas cosas.","No voy a abandonar a nadie para ganar esta pelea.","decisión difícil en escena dramática"],
+["EL SACRIFICIO","El aliado entrega una copia escondida y confiesa que la preparó por si algo salía mal.","Si me pasa algo, entrega esto a todos.","entrega secreta de memoria USB"],
+["LA VERDAD COMPLETA","La copia revela quién organizó los engaños y cuál era el verdadero objetivo.","No querían separarnos; querían que encontráramos esto.","revelación frente a pantalla con documentos"],
+["LA VISITA","Cuando creen que todo terminó, alguien llama a la puerta y pronuncia una frase conocida.","Vengo a contarles lo que falta.","figura inesperada en la entrada de casa"]
+],
+[
+["LA ÚLTIMA PIEZA","La visita entrega una prueba original que permite reconstruir los hechos sin dudas.","Con esto ya no pueden cambiar la historia.","documento original bajo luz intensa"],
+["EL CAREO","Los protagonistas reúnen a todos los implicados y exigen respuestas cara a cara.","Hoy nadie se va sin decir la verdad.","careo de personajes en una sala"],
+["LA CUENTA REGRESIVA","El responsable intenta destruir la última evidencia y el grupo tiene segundos para detenerlo.","¡Deténlo! Si quema eso, perdemos la única copia.","cuenta regresiva y evidencia en peligro"],
+["EL GIRO FINAL","La prueba se salva, pero revela que el plan tenía un segundo responsable.","Encontramos al primero... pero alguien más dio la orden.","rostro sorprendido ante nueva evidencia"]
+],
+[
+["LA CONFRONTACIÓN","Los protagonistas enfrentan al responsable y reconstruyen cada mentira delante de todos.","Se acabaron tus excusas. Esta vez tenemos toda la verdad.","confrontación final cinematográfica"],
+["LA REPARACIÓN","Cada personaje decide qué hará para reparar el daño que causó o sufrió.","No puedo cambiar lo que hice, pero sí lo que haré ahora.","reconciliación emotiva entre personajes"],
+["EL NUEVO COMIENZO","El grupo recupera la confianza y abre una nueva etapa sin ocultar lo ocurrido.","Desde hoy, ninguna decisión se tomará a escondidas.","grupo unido al amanecer"],
+["EL SECRETO QUE QUEDA","Una última llamada revela que alguien conservó una copia de la primera fotografía.","Creyeron que todo terminó... pero yo guardé el original.","teléfono sonando con fotografía misteriosa"]
+]
 ];
+const safe=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const tone={
+"Amor y romance":"emociones románticas, miradas expresivas y tensión sentimental",
+"Traición y venganza":"suspenso, desconfianza y tensión dramática",
+"Amor prohibido":"romance secreto, tensión emocional y decisiones difíciles",
+"Drama familiar":"conflictos familiares, secretos y emociones intensas",
+"Comedia":"situaciones divertidas, reacciones exageradas y ritmo ligero",
+"Misterio":"atmósfera intrigante, pistas visuales y suspenso"
+};
+const cast=chars.map((character,index)=>character+" (diseño 3D de fruta antropomórfica; conservar siempre el mismo color, forma, rostro, vestuario y proporciones)").join("; ");
 let html="";
-let full="FRUTINOVELA: "+name+"\nGÉNERO: "+genre+"\nPERSONAJES: "+chars.join(", ")+"\nIDEA: "+idea+"\n\n";
+let full="FRUTINOVELA: "+name+"\nGÉNERO: "+genre+"\nPERSONAJES: "+chars.join(", ")+"\nIDEA CENTRAL: "+idea+"\n\n";
 for(let c=1;c<=chapters;c++){
-html+="<h3>📺 CAPÍTULO "+c+"</h3>";
+const chapter=plans[c-1];
+html+="<h3>📺 CAPÍTULO "+c+" — "+safe(["La señal","Las contradicciones","El precio de la verdad","Lo que ocultaba la familia","Frente a todos","Aliados por interés","La pieza desaparecida","Una decisión imposible","La última evidencia","Después de la verdad"][c-1])+"</h3>";
 full+="CAPÍTULO "+c+"\n";
-moments.forEach((m,i)=>{
-const character=chars[i%chars.length];
-const seconds=Math.floor(duration/6)+(i<duration%6?1:0);
-const description=m[1]+" Historia: "+idea;
-const prompt="Animación cinematográfica 3D vertical 9:16. Personaje: "+character+". Mantener exactamente su diseño, color, rostro, ropa y proporciones. Escena: "+description+" Estética de telenovela, iluminación cinematográfica.";
-const dialogue=i===0
-? "¡No puedo creer lo que está pasando!"
-: i===5
-? "Esto todavía no ha terminado..."
-: "Necesito saber la verdad. ¿Qué me estás ocultando?";
-html+=`<div class="scene">
-<h3>${m[0]} · ${seconds} segundos</h3>
-<p><b>Personaje:</b> ${character}</p>
-<p><b>Acción:</b> ${description}</p>
-<p><b>Diálogo:</b> ${character}: "${dialogue}"</p>
-<p><b>Prompt de imagen:</b> ${prompt}</p>
-<button class="secondary" onclick="copyText(${JSON.stringify(prompt)})">Copiar prompt</button>
-</div>`;
-full+=m[0]+"\n"+description+"\n"+character+": "+dialogue+"\nPROMPT: "+prompt+"\n\n";
+const base=Math.floor(duration/4),extra=duration%4;
+chapter.forEach((beat,i)=>{
+const character=chars[(c+i-1)%chars.length];
+const seconds=base+(i<extra?1:0);
+const action=beat[1]+" "+idea;
+const dialogue=beat[2];
+const prompt="Animación cinematográfica 3D vertical 9:16. Personajes y continuidad visual: "+cast+". Protagonista de esta toma: "+character+". Escena: "+beat[3]+". Acción: "+action+". Tono: "+(tone[genre]||"drama cinematográfico")+". Expresiones faciales claras, composición dinámica, iluminación de calidad, fondo detallado. No cambiar el diseño de los personajes entre escenas.";
+const title=beat[0];
+html+='<div class="scene"><h3>'+safe(title)+' · '+seconds+' segundos</h3><p><b>Personaje:</b> '+safe(character)+'</p><p><b>Acción:</b> '+safe(action)+'</p><p><b>Diálogo:</b> '+safe(character)+': "'+safe(dialogue)+'"</p><p><b>Prompt de imagen:</b> '+safe(prompt)+'</p><button class="secondary" onclick="copyText('+JSON.stringify(prompt).replace(/</g,"\\u003c")+')">Copiar prompt</button></div>';
+full+=title+"\n"+action+"\n"+character+": "+dialogue+"\nPROMPT: "+prompt+"\n\n";
 });
 }
 currentText=full;
