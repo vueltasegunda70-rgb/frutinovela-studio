@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#24132f">
+<title>Frutinovela Studio</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#100d18;color:#fff;font-family:Arial,sans-serif}
+header{padding:25px 18px;background:linear-gradient(135deg,#702b80,#24132f);text-align:center}
+header h1{margin:0;font-size:27px}
+header p{color:#f3d9f5;font-size:13px}
+main{max-width:720px;margin:auto;padding:16px}
+.card{background:#211b2b;border:1px solid #40334e;border-radius:15px;padding:17px;margin-bottom:15px}
+h2{font-size:18px;margin-top:0}
+label{display:block;margin:13px 0 7px;font-size:13px;color:#e6d8ed}
+input,select,textarea{width:100%;padding:13px;border-radius:9px;border:1px solid #594866;background:#17121e;color:white;font-size:15px}
+textarea{min-height:75px;resize:vertical}
+button{border:0;border-radius:10px;padding:13px;font-size:14px;font-weight:bold;cursor:pointer}
+.primary{background:#e66bb7;color:#261329;width:100%;margin-top:16px}
+.secondary{background:#44334f;color:white}
+.result{display:none}
+.scene{background:#17121e;padding:13px;border-radius:10px;margin:12px 0;border-left:3px solid #e66bb7}
+.scene h3{margin:0 0 8px;color:#f4a4d4;font-size:15px}
+.scene p{font-size:13px;line-height:1.5;color:#e4dce9}
+.scene button{margin-top:7px}
+.small{font-size:12px;color:#bcaec8}
+footer{text-align:center;padding:20px;color:#a99bb5;font-size:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>🍓 FRUTINOVELA STUDIO</h1>
+<p>Tu fábrica de historias virales con frutas</p>
+</header>
+<main>
+<section class="card">
+<h2>🎬 Crear nueva frutinovela</h2>
+<label>Nombre de la historia</label>
+<input id="story" placeholder="Ej: Amor, traición y venganza">
+<label>Género de la historia</label>
+<select id="genre">
+<option>Amor y romance</option>
+<option>Traición y venganza</option>
+<option>Amor prohibido</option>
+<option>Drama familiar</option>
+<option>Comedia</option>
+<option>Misterio</option>
+</select>
+<label>Personajes principales</label>
+<input id="characters" value="Fresa, Manzana, Uva y Plátano">
+<label>Número de capítulos</label>
+<select id="chapters">
+<option value="1">1 capítulo</option>
+<option value="5">5 capítulos</option>
+<option value="10" selected>10 capítulos</option>
+</select>
+<label>Duración del video</label>
+<select id="duration">
+<option value="60">60 segundos</option>
+<option value="70" selected>70 segundos</option>
+<option value="80">80 segundos</option>
+</select>
+<label>Descripción de la historia</label>
+<textarea id="idea" placeholder="Describe brevemente lo que quieres que suceda..."></textarea>
+<button class="primary" onclick="generate()">✨ GENERAR FRUTINOVELA</button>
+<p class="small">Generador inicial gratuito. No requiere registro ni API.</p>
+</section>
+
+<section class="card result" id="result">
+<h2>🎥 Tu frutinovela</h2>
+<div id="output"></div>
+<button class="primary" onclick="saveProject()">💾 GUARDAR PROYECTO</button>
+<button class="secondary" style="width:100%;margin-top:9px" onclick="copyAll()">📋 COPIAR GUION COMPLETO</button>
+</section>
+
+<section class="card">
+<h2>📚 Mis proyectos</h2>
+<div id="saved"><p class="small">Todavía no tienes proyectos guardados.</p></div>
+</section>
+</main>
+<footer>FRUTINOVELA STUDIO · Crea historias, despierta emociones 🍓</footer>
+
+<script>
+let currentText="";
+const $=id=>document.getElementById(id);
+
+function generate(){
+const name=$("story").value.trim()||"El secreto de las frutas";
+const genre=$("genre").value;
+const chars=$("characters").value.split(",").map(x=>x.trim()).filter(Boolean);
+const chapters=Number($("chapters").value);
+const duration=Number($("duration").value);
+const idea=$("idea").value.trim()||"Un secreto amenaza con separar a los protagonistas.";
+if(chars.length===0){alert("Escribe al menos un personaje.");return;}
+
+const moments=[
+["GANCHO INICIAL","Algo inesperado está a punto de cambiar sus vidas."],
+["EL ENCUENTRO","Los protagonistas se encuentran y hablan de lo ocurrido."],
+["LA SOSPECHA","Uno de ellos descubre una pista que no esperaba."],
+["LA REVELACIÓN","Un personaje revela un secreto que cambia todo."],
+["EL CONFLICTO","Los protagonistas deben decidir en quién confiar."],
+["FINAL SORPRESA","Una noticia inesperada deja abierta la historia."]
+];
+let html="";
+let full="FRUTINOVELA: "+name+"\nGÉNERO: "+genre+"\nPERSONAJES: "+chars.join(", ")+"\nIDEA: "+idea+"\n\n";
+for(let c=1;c<=chapters;c++){
+html+="<h3>📺 CAPÍTULO "+c+"</h3>";
+full+="CAPÍTULO "+c+"\n";
+moments.forEach((m,i)=>{
+const character=chars[i%chars.length];
+const seconds=Math.floor(duration/6)+(i<duration%6?1:0);
+const description=m[1]+" Historia: "+idea;
+const prompt="Animación cinematográfica 3D vertical 9:16. Personaje: "+character+". Mantener exactamente su diseño, color, rostro, ropa y proporciones. Escena: "+description+" Estética de telenovela, iluminación cinematográfica.";
+const dialogue=i===0
+? "¡No puedo creer lo que está pasando!"
+: i===5
+? "Esto todavía no ha terminado..."
+: "Necesito saber la verdad. ¿Qué me estás ocultando?";
+html+=`<div class="scene">
+<h3>${m[0]} · ${seconds} segundos</h3>
+<p><b>Personaje:</b> ${character}</p>
+<p><b>Acción:</b> ${description}</p>
+<p><b>Diálogo:</b> ${character}: "${dialogue}"</p>
+<p><b>Prompt de imagen:</b> ${prompt}</p>
+<button class="secondary" onclick="copyText(${JSON.stringify(prompt)})">Copiar prompt</button>
+</div>`;
+full+=m[0]+"\n"+description+"\n"+character+": "+dialogue+"\nPROMPT: "+prompt+"\n\n";
+});
+}
+currentText=full;
+$("output").innerHTML=html;
+$("result").style.display="block";
+$("result").scrollIntoView({behavior:"smooth"});
+}
+
+function copyText(text){
+if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>alert("¡Copiado!")).catch(()=>alert("No se pudo copiar."));}
+else{alert("Selecciona y copia el texto manualmente.");}
+}
+function copyAll(){copyText(currentText);}
+function saveProject(){
+if(!currentText){alert("Primero genera una historia.");return;}
+let projects=JSON.parse(localStorage.getItem("frutinovelaProjects")||"[]");
+projects.unshift({date:new Date().toLocaleString(),text:currentText});
+localStorage.setItem("frutinovelaProjects",JSON.stringify(projects));
+loadProjects();
+alert("¡Proyecto guardado!");
+}
+function loadProjects(){
+let projects=JSON.parse(localStorage.getItem("frutinovelaProjects")||"[]");
+$("saved").innerHTML=projects.length?projects.map((p,i)=>`<div class="scene"><b>Proyecto ${i+1}</b><p class="small">${p.date}</p><button class="secondary" onclick="copyText(${JSON.stringify(p.text)})">Copiar guion</button></div>`).join(""):'<p class="small">Todavía no tienes proyectos guardados.</p>';
+}
+loadProjects();
+</script>
+</body>
+</html>
