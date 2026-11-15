@@ -171,7 +171,50 @@ const tone={
 "Comedia":"situaciones divertidas, reacciones exageradas y ritmo ligero",
 "Misterio":"atmósfera intrigante, pistas visuales y suspenso"
 };
-const cast=chars.map((character,index)=>character+" (diseño 3D de fruta antropomórfica; conservar siempre el mismo color, forma, rostro, vestuario y proporciones)").join("; ");
+const fruitProfiles = [
+[/fresa|frutilla/i,"fruta roja con pequeñas semillas visibles y hojas verdes en la parte superior"],
+[/manzana/i,"manzana redondeada roja o verde, con pequeño tallo y brillo natural"],
+[/uva/i,"racimo compacto de uvas moradas o verdes, con hojas pequeñas"],
+[/plátano|platano|banana/i,"plátano amarillo curvado con extremos naturales"],
+[/naranja|mandarina/i,"cítrico naranja redondeado con textura fina de cáscara"],
+[/limón|limon/i,"limón amarillo ovalado con textura fina de cáscara"],
+[/piña|pina/i,"piña dorada con patrón geométrico y corona verde"],
+[/pera/i,"pera verde o amarilla con silueta característica y pequeño tallo"],
+[/mango/i,"mango ovalado con degradado natural amarillo y rojizo"],
+[/sandía|sandia/i,"sandía verde con rayas oscuras y pulpa roja solo si la escena la muestra abierta"]
+];
+function visualIdentity(character){
+const match=fruitProfiles.find(([pattern])=>pattern.test(character));
+const fruit=match?match[1]:"fruta antropomórfica de diseño original; conservar exactamente el color, silueta y textura establecidos en su primera imagen";
+return character+": "+fruit+"; personaje 3D antropomórfico; conservar el mismo rostro, ojos, cejas, boca, tamaño, proporciones, textura, vestuario y accesorios en todos los planos; no rediseñar ni cambiar de especie";
+}
+const cast=chars.map(character=>visualIdentity(character)).join("; ");
+function emotionFor(beat,genre){
+const text=(beat[0]+" "+beat[1]).toLowerCase();
+if(/confront|acus|traici|mentir|enga|trampa|careo|desafío|desafio/.test(text))return {name:"tensión y determinación",face:"cejas ligeramente juntas, mirada fija, ojos atentos y mandíbula firme",gesture:"inclina el torso hacia delante, señala o abre las manos solo cuando corresponda y mantiene los pies firmes"};
+if(/huida|escape|persec|robo|cuenta regresiva/.test(text))return {name:"urgencia y miedo controlado",face:"ojos abiertos, cejas elevadas y mirada que sigue el peligro",gesture:"pasos rápidos pero apoyados, brazos equilibrando el cuerpo y giro de cabeza hacia la dirección de escape"};
+if(/confes|recuerdo|carta|promesa|sacrificio|sacrificio|reparación|reconciliación/.test(text))return {name:"emoción vulnerable",face:"mirada suave, cejas expresivas y sonrisa o tristeza contenida según el diálogo",gesture:"respiración visible y sutil, hombros relajados y manos que se acercan al pecho o al objeto importante"};
+if(/revel|hallazgo|prueba|secreto|giro|nombre|descubr/.test(text))return {name:"sorpresa y descubrimiento",face:"ojos que se abren gradualmente, cejas elevadas y boca ligeramente entreabierta",gesture:"detiene brevemente el movimiento, dirige la mirada al descubrimiento y después reacciona con un gesto claro"};
+if(genre==="Comedia")return {name:"alegría juguetona",face:"sonrisa amplia, ojos vivaces y cejas móviles",gesture:"movimientos ágiles y expresivos, sin exagerar ni deformar el cuerpo"};
+if(/Amor|romance/i.test(genre))return {name:"ternura y nerviosismo",face:"mirada cálida, sonrisa discreta y cejas suaves",gesture:"pequeño acercamiento, mirada al otro personaje y manos relajadas"};
+return {name:"emoción coherente con el diálogo",face:"expresión facial legible y natural que cambia gradualmente",gesture:"gestos pequeños de manos, cabeza y torso sincronizados con la acción"};
+}
+function cameraFor(beat,index){
+const text=(beat[0]+" "+beat[1]).toLowerCase();
+if(/huida|escape|persec|robo/.test(text))return "travelling lateral fluido que acompaña al personaje, cámara estable y sin vibraciones bruscas";
+if(/confront|acus|traici|careo|desafío|desafio/.test(text))return "plano medio sobre el hombro y acercamiento lento hacia el personaje que habla, manteniendo visible su reacción";
+if(/carta|objeto|llave|mapa|fotografía|fotografia|prueba|documento/.test(text))return "primer plano del objeto importante y elevación suave de cámara hasta revelar el rostro del personaje";
+if(/revel|giro|secreto|hallazgo|descubr/.test(text))return "acercamiento cinematográfico lento con cambio de foco desde la pista hasta los ojos del personaje";
+if(/repar|reconcili|nuevo comienzo|amanecer/.test(text))return "órbita muy suave alrededor de los personajes y apertura gradual del encuadre";
+return ["dolly-in lento desde plano medio hasta primer plano","travelling de seguimiento suave a la altura de los ojos","paneo corto y controlado que revela al otro personaje"][index%3];
+}
+function buildVideoPrompt(character,beat,seconds,chapter,sceneIndex,genre){
+const emotion=emotionFor(beat,genre);
+const camera=cameraFor(beat,sceneIndex);
+const t1=Math.max(2,Math.round(seconds*0.22));
+const t2=Math.max(t1+2,Math.round(seconds*0.72));
+return "VIDEO 3D CINEMATOGRÁFICO VERTICAL 9:16. Duración: "+seconds+" segundos. Movimiento fluido a 24 fps. Escena: "+beat[0]+". PERSONAJES Y BLOQUEO VISUAL: "+cast+". Personaje que lleva la acción: "+character+". Usar el mismo modelo 3D y, si la herramienta lo permite, la misma imagen de referencia o el último fotograma del clip anterior. No cambiar color, especie, rostro, ojos, tamaño, proporciones, vestuario ni accesorios. ACCIÓN: "+beat[1]+". SECUENCIA: 0-"+t1+" s: el personaje orienta la mirada hacia el elemento o persona relevante y prepara la acción con una respiración sutil; "+t1+"-"+t2+" s: realiza de forma clara y completa la acción descrita, con desplazamiento del peso, pasos y movimiento de brazos físicamente naturales; "+t2+"-"+seconds+" s: muestra la consecuencia emocional, dirige la mirada al interlocutor u objeto y termina en una pose estable que permita enlazar con la escena siguiente. EMOCIÓN: "+emotion.name+". ROSTRO: "+emotion.face+". GESTOS: "+emotion.gesture+". CÁMARA: "+camera+". Mantener al personaje principal enfocado y las manos visibles cuando sean necesarias. RITMO: inicio legible, acción central con energía y cierre breve; sin movimientos acelerados artificiales. DIÁLOGO EN ESPAÑOL: "+character+" dice exactamente: «"+beat[2]+"». Sincronizar labios con esas palabras y no añadir diálogos. CONTINUIDAD: conservar lugar, iluminación, dirección de mirada, posición de objetos y estado de los personajes; conectar con el final del capítulo anterior y dejar una pose final útil para el siguiente. ESTILO: animación 3D de película familiar, iluminación cinematográfica suave, profundidad de campo moderada, expresiones claras y movimiento corporal natural. EVITAR: deformaciones, extremidades adicionales, cambios de rostro o vestuario, parpadeo, saltos de posición, movimientos robóticos, personajes duplicados, texto en pantalla, subtítulos, logos y marcas de agua.";
+}
 let html="";
 let full="FRUTINOVELA: "+name+"\nGÉNERO: "+genre+"\nPERSONAJES: "+chars.join(", ")+"\nIDEA CENTRAL: "+idea+"\n\n";
 for(let c=1;c<=chapters;c++){
@@ -184,10 +227,11 @@ const character=chars[(c+i-1)%chars.length];
 const seconds=base+(i<extra?1:0);
 const action=beat[1]+" "+idea;
 const dialogue=beat[2];
-const prompt="Animación cinematográfica 3D vertical 9:16. Personajes y continuidad visual: "+cast+". Protagonista de esta toma: "+character+". Escena: "+beat[3]+". Acción: "+action+". Tono: "+(tone[genre]||"drama cinematográfico")+". Expresiones faciales claras, composición dinámica, iluminación de calidad, fondo detallado. No cambiar el diseño de los personajes entre escenas.";
+const prompt="Imagen cinematográfica 3D vertical 9:16. Ficha visual fija de los personajes: "+cast+". Protagonista de esta imagen: "+character+". Escena: "+beat[3]+". Acción congelada: "+action+". Tono: "+(tone[genre]||"drama cinematográfico")+". Expresiones legibles, composición dinámica, iluminación cuidada y fondo detallado. Mantener exactamente el mismo diseño visual en todas las escenas.";
+const videoPrompt=buildVideoPrompt(character,beat,seconds,c,i,genre);
 const title=beat[0];
-html+='<div class="scene"><h3>'+safe(title)+' · '+seconds+' segundos</h3><p><b>Personaje:</b> '+safe(character)+'</p><p><b>Acción:</b> '+safe(action)+'</p><p><b>Diálogo:</b> '+safe(character)+': "'+safe(dialogue)+'"</p><p><b>Prompt de imagen:</b> '+safe(prompt)+'</p><button class="secondary" onclick="copyText('+JSON.stringify(prompt).replace(/</g,"\\u003c")+')">Copiar prompt</button></div>';
-full+=title+"\n"+action+"\n"+character+": "+dialogue+"\nPROMPT: "+prompt+"\n\n";
+html+='<div class="scene"><h3>'+safe(title)+' · '+seconds+' segundos</h3><p><b>Personaje:</b> '+safe(character)+'</p><p><b>Acción:</b> '+safe(action)+'</p><p><b>Diálogo:</b> '+safe(character)+': "'+safe(dialogue)+'"</p><p><b>Prompt de imagen:</b> '+safe(prompt)+'</p><button class="secondary" onclick="copyText('+JSON.stringify(prompt).replace(/</g,"\\u003c")+')">Copiar prompt de imagen</button><p><b>Prompt de video:</b> '+safe(videoPrompt)+'</p><button class="secondary" onclick="copyText('+JSON.stringify(videoPrompt).replace(/</g,"\\u003c")+')">Copiar prompt de video</button></div>';
+full+=title+"\n"+action+"\n"+character+": "+dialogue+"\nPROMPT DE IMAGEN: "+prompt+"\nPROMPT DE VIDEO: "+videoPrompt+"\n\n";
 });
 }
 currentText=full;
