@@ -389,17 +389,86 @@ if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>alert("¡Co
 else{alert("Selecciona y copia el texto manualmente.");}
 }
 function copyAll(){copyText(currentText);}
+function readSavedProjects(){
+try{
+const value=JSON.parse(localStorage.getItem("frutinovelaProjects")||"[]");
+return Array.isArray(value)?value.filter(p=>p&&typeof p.text==="string"):[];
+}catch(error){console.warn("No se pudieron leer los proyectos guardados:",error);return[];}
+}
 function saveProject(){
 if(!currentText){alert("Primero genera una historia.");return;}
-let projects=JSON.parse(localStorage.getItem("frutinovelaProjects")||"[]");
-projects.unshift({date:new Date().toLocaleString(),text:currentText});
+const projects=readSavedProjects();
+if(projects.some(p=>p.text===currentText)){
+alert("Esta historia ya está guardada en Mis proyectos.");return;
+}
+const title=$("story").value.trim()||"Mi frutinovela";
+projects.unshift({title,date:new Date().toISOString(),text:currentText});
+try{
+localStorage.setItem("frutinovelaProjects",JSON.stringify(projects.slice(0,50)));
+loadProjects();
+alert("¡Proyecto guardado! Puedes abrirlo o descargarlo desde Mis proyectos.");
+}catch(error){
+alert("No hay espacio suficiente en el almacenamiento del navegador. Descarga o elimina proyectos antiguos e inténtalo de nuevo.");
+}
+}
+function restoreProject(index){
+const project=readSavedProjects()[index];
+if(!project)return;
+currentText=project.text;
+const output=$("output");
+output.innerHTML="";
+const pre=document.createElement("pre");
+pre.style.whiteSpace="pre-wrap";
+pre.style.overflowWrap="anywhere";
+pre.style.fontFamily="inherit";
+pre.textContent=project.text;
+output.appendChild(pre);
+$("result").style.display="block";
+$("result").scrollIntoView({behavior:"smooth"});
+}
+function downloadProject(index){
+const project=readSavedProjects()[index];
+if(!project)return;
+const safeName=(project.title||"frutinovela").replace(/[^a-zA-Z0-9_-]+/g,"-").replace(/^-|-$/g,"")||"frutinovela";
+const blob=new Blob([project.text],{type:"text/plain;charset=utf-8"});
+const url=URL.createObjectURL(blob);
+const link=document.createElement("a");
+link.href=url;link.download=safeName+".txt";
+document.body.appendChild(link);link.click();link.remove();
+setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function deleteProject(index){
+const projects=readSavedProjects();
+if(!projects[index])return;
+if(!confirm("¿Eliminar este proyecto guardado? Esta acción no se puede deshacer."))return;
+projects.splice(index,1);
 localStorage.setItem("frutinovelaProjects",JSON.stringify(projects));
 loadProjects();
-alert("¡Proyecto guardado!");
 }
 function loadProjects(){
-let projects=JSON.parse(localStorage.getItem("frutinovelaProjects")||"[]");
-$("saved").innerHTML=projects.length?projects.map((p,i)=>`<div class="scene"><b>Proyecto ${i+1}</b><p class="small">${p.date}</p><button class="secondary" onclick="copyText(${JSON.stringify(p.text)})">Copiar guion</button></div>`).join(""):'<p class="small">Todavía no tienes proyectos guardados.</p>';
+const container=$("saved");
+const projects=readSavedProjects();
+container.innerHTML="";
+if(!projects.length){
+const empty=document.createElement("p");
+empty.className="small";
+empty.textContent="Todavía no tienes proyectos guardados.";
+container.appendChild(empty);return;
+}
+projects.forEach((project,index)=>{
+const card=document.createElement("div");card.className="scene";
+const title=document.createElement("b");title.textContent=project.title||("Proyecto "+(index+1));
+const date=document.createElement("p");date.className="small";
+const parsedDate=new Date(project.date);
+date.textContent=project.date?(Number.isNaN(parsedDate.getTime())?project.date:parsedDate.toLocaleString()):"Fecha no disponible";
+const preview=document.createElement("p");preview.className="small";
+preview.textContent=project.text.slice(0,180)+(project.text.length>180?"…":"");
+const actions=document.createElement("div");actions.style.display="flex";actions.style.flexWrap="wrap";actions.style.gap="8px";
+const open=document.createElement("button");open.className="secondary";open.textContent="Abrir guion";open.addEventListener("click",()=>restoreProject(index));
+const download=document.createElement("button");download.className="secondary";download.textContent="Descargar TXT";download.addEventListener("click",()=>downloadProject(index));
+const remove=document.createElement("button");remove.className="secondary";remove.textContent="Eliminar";remove.addEventListener("click",()=>deleteProject(index));
+actions.append(open,download,remove);card.append(title,date,preview,actions);container.appendChild(card);
+});
 }
 loadProjects();
 const savedWorker=localStorage.getItem("frutiWorkerUrl");if(savedWorker)$("videoWorkerUrl").value=savedWorker;
