@@ -445,6 +445,90 @@ projects.splice(index,1);
 localStorage.setItem("frutinovelaProjects",JSON.stringify(projects));
 loadProjects();
 }
+function editProject(index){
+const project=readSavedProjects()[index];
+if(!project)return;
+const card=$("saved").children[index];
+if(!card)return;
+const editor=document.createElement("div");
+editor.className="project-editor";
+editor.style.marginTop="14px";
+editor.style.display="grid";
+editor.style.gap="9px";
+const titleLabel=document.createElement("label");
+titleLabel.textContent="Nombre de la historia";
+const titleInput=document.createElement("input");
+titleInput.id="edit-title-"+index;
+titleInput.value=project.title||"Mi frutinovela";
+titleInput.maxLength=100;
+const textLabel=document.createElement("label");
+textLabel.textContent="Guion completo (puedes corregir diálogos y escenas)";
+const textarea=document.createElement("textarea");
+textarea.id="edit-text-"+index;
+textarea.value=project.text;
+textarea.rows=16;
+textarea.style.width="100%";
+textarea.style.minHeight="300px";
+textarea.style.boxSizing="border-box";
+textarea.style.whiteSpace="pre-wrap";
+const actions=document.createElement("div");
+actions.style.display="flex";
+actions.style.flexWrap="wrap";
+actions.style.gap="8px";
+const save=document.createElement("button");
+save.className="primary";
+save.textContent="Guardar cambios";
+save.addEventListener("click",()=>saveProjectEdits(index));
+const add=document.createElement("button");
+add.className="secondary";
+add.textContent="＋ Añadir capítulo";
+add.addEventListener("click",()=>appendChapterToEditor(index));
+const cancel=document.createElement("button");
+cancel.className="secondary";
+cancel.textContent="Cancelar";
+cancel.addEventListener("click",()=>loadProjects());
+actions.append(save,add,cancel);
+editor.append(titleLabel,titleInput,textLabel,textarea,actions);
+const previous=card.querySelector(".project-editor");
+if(previous)previous.remove();
+card.appendChild(editor);
+textarea.focus();
+}
+function appendChapterToEditor(index){
+const textarea=$("edit-text-"+index);
+if(!textarea)return;
+const text=textarea.value;
+const matches=[...text.matchAll(/^CAPÍTULO\s+(\d+)/gim)];
+const nextNumber=matches.reduce((max,match)=>Math.max(max,Number(match[1])||0),0)+1;
+const template="\n\nCAPÍTULO "+nextNumber+" — NUEVO CAPÍTULO\n"+
+"ESCENA 1 — TÍTULO DE LA ESCENA\nPersonaje:\nAcción:\nDiálogo exacto:\nPROMPT DE IMAGEN:\nPROMPT DE VIDEO:\n\n"+
+"ESCENA 2 — TÍTULO DE LA ESCENA\nPersonaje:\nAcción:\nDiálogo exacto:\nPROMPT DE IMAGEN:\nPROMPT DE VIDEO:\n\n"+
+"ESCENA 3 — TÍTULO DE LA ESCENA\nPersonaje:\nAcción:\nDiálogo exacto:\nPROMPT DE IMAGEN:\nPROMPT DE VIDEO:\n\n"+
+"ESCENA 4 — TÍTULO DE LA ESCENA\nPersonaje:\nAcción:\nDiálogo exacto:\nPROMPT DE IMAGEN:\nPROMPT DE VIDEO:\n";
+textarea.value=text+template;
+textarea.focus();
+textarea.setSelectionRange(textarea.value.length,textarea.value.length);
+}
+function saveProjectEdits(index){
+const projects=readSavedProjects();
+const project=projects[index];
+const textarea=$("edit-text-"+index);
+const titleInput=$("edit-title-"+index);
+if(!project||!textarea||!titleInput)return;
+const updatedText=textarea.value.trim();
+if(!updatedText){alert("El guion no puede quedar vacío.");return;}
+project.text=updatedText;
+project.title=titleInput.value.trim()||"Mi frutinovela";
+project.date=new Date().toISOString();
+try{
+localStorage.setItem("frutinovelaProjects",JSON.stringify(projects));
+currentText=updatedText;
+loadProjects();
+alert("Cambios guardados. Tu historia sigue disponible en Mis proyectos.");
+}catch(error){
+alert("No se pudieron guardar los cambios. Descarga una copia y libera espacio en el navegador.");
+}
+}
 function loadProjects(){
 const container=$("saved");
 const projects=readSavedProjects();
@@ -466,8 +550,9 @@ preview.textContent=project.text.slice(0,180)+(project.text.length>180?"…":"")
 const actions=document.createElement("div");actions.style.display="flex";actions.style.flexWrap="wrap";actions.style.gap="8px";
 const open=document.createElement("button");open.className="secondary";open.textContent="Abrir guion";open.addEventListener("click",()=>restoreProject(index));
 const download=document.createElement("button");download.className="secondary";download.textContent="Descargar TXT";download.addEventListener("click",()=>downloadProject(index));
+const edit=document.createElement("button");edit.className="secondary";edit.textContent="Editar / continuar";edit.addEventListener("click",()=>editProject(index));
 const remove=document.createElement("button");remove.className="secondary";remove.textContent="Eliminar";remove.addEventListener("click",()=>deleteProject(index));
-actions.append(open,download,remove);card.append(title,date,preview,actions);container.appendChild(card);
+actions.append(open,download,edit,remove);card.append(title,date,preview,actions);container.appendChild(card);
 });
 }
 loadProjects();
