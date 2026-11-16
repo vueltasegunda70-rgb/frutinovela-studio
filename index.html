@@ -483,11 +483,12 @@ const add=document.createElement("button");
 add.className="secondary";
 add.textContent="＋ Añadir capítulo";
 add.addEventListener("click",()=>appendChapterToEditor(index));
+const continueStory=document.createElement("button");continueStory.className="primary";continueStory.textContent="✨ Crear capítulo automáticamente";continueStory.addEventListener("click",()=>generateContinuationChapter(index));
 const cancel=document.createElement("button");
 cancel.className="secondary";
 cancel.textContent="Cancelar";
 cancel.addEventListener("click",()=>loadProjects());
-actions.append(save,add,cancel);
+actions.append(save,continueStory,add,cancel);
 editor.append(titleLabel,titleInput,textLabel,textarea,actions);
 const previous=card.querySelector(".project-editor");
 if(previous)previous.remove();
@@ -508,6 +509,45 @@ const template="\n\nCAPÍTULO "+nextNumber+" — NUEVO CAPÍTULO\n"+
 textarea.value=text+template;
 textarea.focus();
 textarea.setSelectionRange(textarea.value.length,textarea.value.length);
+}
+function generateContinuationChapter(index){
+const projects=readSavedProjects();
+const project=projects[index];
+const textarea=$("edit-text-"+index);
+if(!project||!textarea)return;
+const original=textarea.value.trim();
+if(!original){alert("Primero escribe o recupera el guion de la historia.");return;}
+const chapterMatches=[...original.matchAll(/^CAPÍTULO\s+(\d+)/gim)];
+const chapterNumber=chapterMatches.reduce((max,m)=>Math.max(max,Number(m[1])||0),0)+1;
+const characterLine=original.match(/^PERSONAJES:\s*(.+)$/im);
+const castNames=characterLine?characterLine[1].split(",").map(x=>x.trim()).filter(Boolean):[];
+if(!castNames.length){alert("No encontré la lista de personajes al inicio del guion. Añade una línea PERSONAJES: con sus nombres para mantener la continuidad.");return;}
+const lastPart=original.slice(-1400);
+const clue=lastPart.split(/\n/).filter(x=>x.trim()).slice(-3).join(" ").slice(0,260)||"un secreto que todavía no se ha resuelto";
+const arcs=[
+{title:"La prueba inesperada",events:[["LA SEÑAL OCULTA","Uno de los personajes descubre una pista escondida que conecta con lo ocurrido anteriormente.","Esta señal no apareció por casualidad. Alguien quiere que la encontremos.","detalle misterioso descubierto entre objetos"],["DOS VERSIONES","Dos personajes recuerdan el mismo momento de manera diferente y la tensión aumenta.","Tú recuerdas una cosa, pero yo estuve allí y sé lo que pasó.","dos personajes discutiendo con gestos distintos"],["EL RIESGO","El grupo decide comprobar la pista, aunque hacerlo puede poner en peligro su confianza.","Si damos este paso, ya no podremos fingir que no sabemos nada.","personajes avanzando con cautela hacia una puerta"],["LA NUEVA SOSPECHA","Una evidencia final señala a alguien inesperado, pero no demuestra toda la verdad.","Creíamos estar buscando a un extraño… y la respuesta estaba mucho más cerca.","reacción de sorpresa ante una evidencia"]]},
+{title:"Una alianza difícil",events:[["LA PETICIÓN","Un personaje pide ayuda y revela que no puede resolver el problema por sí solo.","No confío fácilmente, pero esta vez necesito que me escuches.","personaje pidiendo ayuda con expresión vulnerable"],["LA CONDICIÓN","El otro acepta colaborar, pero establece una condición que incomoda al grupo.","Te ayudaré, pero esta vez no habrá secretos entre nosotros.","dos personajes negociando frente a frente"],["EL PLAN","Los personajes ponen en marcha un plan y una pequeña equivocación cambia el rumbo.","¡Espera! Eso no era parte del plan.","acción rápida con objeto que cae y personajes reaccionando"],["EL PRECIO","La alianza consigue una pista, aunque alguien termina ocultando un detalle importante.","Hay algo que todavía no te he contado…","personaje apartado en sombra guardando un secreto"]]},
+{title:"La verdad a medias",events:[["EL REGRESO","Aparece alguien relacionado con el conflicto anterior y trae una explicación inesperada.","Después de todo lo ocurrido, pensé que no volvería a verte.","reencuentro tenso en un pasillo"],["LA CONFESIÓN","La persona admite una parte de lo sucedido, pero evita responder la pregunta principal.","Te estoy diciendo la verdad… al menos la parte que puedo contar.","primer plano de rostro preocupado"],["LA CONTRADICCIÓN","Un objeto o recuerdo contradice la confesión y provoca una discusión.","Entonces explícame por qué esto demuestra lo contrario.","personaje mostrando una prueba mientras otro retrocede"],["EL GIRO","La prueba revela que el problema es más grande de lo que todos imaginaban.","Si esto es cierto, ninguno de nosotros conoce toda la historia.","todos mirando una evidencia con temor"]]}
+];
+const arc=arcs[(chapterNumber-1)%arcs.length];
+let chapterText="\n\nCAPÍTULO "+chapterNumber+" — "+arc.title+"\n";
+const beats=arc.events;
+beats.forEach((beat,i)=>{
+const character=castNames[(chapterNumber+i-1)%castNames.length];
+const partner=castNames[(chapterNumber+i)%castNames.length]||character;
+const seconds=8;
+const expanded=[beat[0],beat[1]+" La situación continúa a partir de este antecedente de la historia: "+clue+".",beat[2],beat[3]];
+const prompt="Imagen 3D cinematográfica vertical 9:16. Mantener exactamente el diseño, color, rostro, proporciones, vestuario y accesorios ya establecidos para "+castNames.join(", ")+". Personaje principal: "+character+". Acción: "+expanded[1]+". Emoción coherente con el diálogo: "+beat[2]+". Escenario: "+beat[3]+". Continuidad: "+clue+". Iluminación cinematográfica, composición clara, sin personajes duplicados ni extremidades adicionales.";
+let videoPrompt="";
+try{videoPrompt=buildVideoPrompt(character,expanded,seconds,chapterNumber,i,$("genre")?$("genre").value:"drama");}
+catch(error){videoPrompt="VIDEO 3D CINEMATOGRÁFICO VERTICAL 9:16, 8 segundos. "+expanded[1]+" "+character+" expresa la emoción de su diálogo con rostro, mirada, cejas y postura coherentes. Cámara con movimiento suave y encuadre cinematográfico. Mantener idéntica la apariencia del personaje y continuidad con la escena anterior. Diálogo exacto en español: "+character+": "+beat[2]+". Sin deformaciones, duplicaciones ni extremidades adicionales.";}
+chapterText+="\nESCENA "+(i+1)+" — "+beat[0]+"\nAcción: "+expanded[1]+"\n"+character+": "+beat[2]+"\nPROMPT DE IMAGEN: "+prompt+"\nPROMPT DE VIDEO: "+videoPrompt+"\n";
+});
+chapterText+="\nCONTINUIDAD PARA EL PRÓXIMO CAPÍTULO: "+clue+"\n";
+textarea.value=original+chapterText;
+textarea.focus();
+textarea.setSelectionRange(textarea.value.length,textarea.value.length);
+alert("Capítulo "+chapterNumber+" preparado. Revísalo y pulsa «Guardar cambios» para conservarlo.");
 }
 function saveProjectEdits(index){
 const projects=readSavedProjects();
