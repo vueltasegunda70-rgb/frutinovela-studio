@@ -73,6 +73,20 @@ footer{text-align:center;padding:20px;color:#a99bb5;font-size:12px}
 <p class="small">Generador inicial gratuito. No requiere registro ni API.</p>
 </section>
 
+
+<section class="card" id="videoStudio">
+<h2>🎞️ Estudio de video con fal</h2>
+<p class="small">Genera clips de tus escenas en vertical 9:16. La clave de fal se guarda únicamente en el servidor, nunca aquí.</p>
+<label>Dirección del servidor seguro (Worker URL)</label>
+<input id="videoWorkerUrl" type="url" placeholder="https://tu-worker.tu-cuenta.workers.dev">
+<label>Calidad de video</label>
+<select id="videoResolution"><option value="720p" selected>720p · recomendado</option><option value="1080p">1080p · mayor coste</option></select>
+<p class="small">Estimación orientativa del modelo: 720p ≈ US$0.0819 por segundo; 1080p ≈ US$0.1229 por segundo. Se cobra por generación exitosa. El precio puede cambiar.</p>
+<div id="videoGlobalStatus" class="small" aria-live="polite">Configura el servidor seguro para activar la generación.</div>
+<button class="primary" style="margin-top:10px" onclick="mergeStoryVideos()">🎬 UNIR LOS CLIPS GENERADOS EN UN MP4</button>
+<div id="mergedVideoResult"></div>
+</section>
+
 <section class="card result" id="result">
 <h2>🎥 Tu frutinovela</h2>
 <div id="output"></div>
@@ -294,7 +308,7 @@ const dialogue=beat[2];
 const prompt="Imagen cinematográfica 3D vertical 9:16. Ficha visual fija de los personajes: "+cast+". Protagonista de esta imagen: "+character+". Escena: "+beat[3]+". Acción congelada: "+action+". Tono: "+(tone[genre]||"drama cinematográfico")+". Expresiones legibles, composición dinámica, iluminación cuidada y fondo detallado. Mantener exactamente el mismo diseño visual en todas las escenas.";
 const videoPrompt=buildVideoPrompt(character,beat,seconds,c,i,genre);
 const title=beat[0];
-html+='<div class="scene"><h3>'+safe(title)+' · '+seconds+' segundos</h3><p><b>Personaje:</b> '+safe(character)+'</p><p><b>Acción:</b> '+safe(action)+'</p><p><b>Diálogo:</b> '+safe(character)+': "'+safe(dialogue)+'"</p><p><b>Prompt de imagen:</b> '+safe(prompt)+'</p><button class="secondary" onclick="copyText('+JSON.stringify(prompt).replace(/</g,"\\u003c")+')">Copiar prompt de imagen</button><p><b>Prompt de video:</b> '+safe(videoPrompt)+'</p><button class="secondary" onclick="copyText('+JSON.stringify(videoPrompt).replace(/</g,"\\u003c")+')">Copiar prompt de video</button></div>';
+html+='<div class="scene"><h3>'+safe(title)+' · '+seconds+' segundos</h3><p><b>Personaje:</b> '+safe(character)+'</p><p><b>Acción:</b> '+safe(action)+'</p><p><b>Diálogo:</b> '+safe(character)+': "'+safe(dialogue)+'"</p><p><b>Prompt de imagen:</b> '+safe(prompt)+'</p><button class="secondary" onclick="copyText('+JSON.stringify(prompt).replace(/</g,"\\u003c")+')">Copiar prompt de imagen</button><p><b>Prompt de video:</b> '+safe(videoPrompt)+'</p><button class="secondary" onclick="copyText('+JSON.stringify(videoPrompt).replace(/</g,"\\u003c")+')">Copiar prompt de video</button><button class="primary" onclick="generateSceneVideo(JSON.stringify(videoPrompt).replace(/</g,"\\u003c")+", "+JSON.stringify("c"+c+"s"+i)+", "+seconds)">🎥 Generar video de esta escena</button><div id="video-job-c"+c+"s"+i+"" class="video-job small"></div></div>';
 full+=title+"\n"+action+"\n"+character+": "+dialogue+"\nPROMPT DE IMAGEN: "+prompt+"\nPROMPT DE VIDEO: "+videoPrompt+"\n\n";
 });
 }
@@ -302,6 +316,71 @@ currentText=full;
 $("output").innerHTML=html;
 $("result").style.display="block";
 $("result").scrollIntoView({behavior:"smooth"});
+}
+
+
+let frutiVideos={};
+function videoApiBase(){
+const value=$("videoWorkerUrl").value.trim().replace(/\/+$/,"");
+if(value)localStorage.setItem("frutiWorkerUrl",value);
+return value;
+}
+function videoStatus(message){const el=$("videoGlobalStatus");if(el)el.textContent=message;}
+async function falRequest(path,options={}){
+const base=videoApiBase();
+if(!base)throw new Error("Primero configura la dirección del servidor seguro.");
+const response=await fetch(base+path,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
+const data=await response.json().catch(()=>({}));
+if(!response.ok)throw new Error(data.error||data.detail||"El servidor de video respondió con un error.");
+return data;
+}
+async function waitForFalJob(jobType,requestId,onUpdate){
+for(let attempt=0;attempt<180;attempt++){
+const data=await falRequest("/api/status?jobType="+encodeURIComponent(jobType)+"&id="+encodeURIComponent(requestId),{method:"GET",headers:{}});
+if(data.status==="COMPLETED"){
+if(data.error)throw new Error(data.error);
+if(!data.video_url)throw new Error("La generación terminó, pero no llegó la dirección del MP4.");
+return data.video_url;
+}
+onUpdate(data.status==="IN_QUEUE"?"En cola de generación…":"Generando video con fal…");
+await new Promise(resolve=>setTimeout(resolve,5000));
+}
+throw new Error("La generación está tardando más de lo esperado. Puedes volver a consultar el estado.");
+}
+async function generateSceneVideo(prompt,key,sceneSeconds){
+const target=$("video-job-"+key);
+if(!target)return;
+try{
+const base=videoApiBase();
+if(!base){alert("Antes de generar, debemos configurar el servidor seguro de fal. No introduzcas tu clave API aquí.");return;}
+const resolution=$("videoResolution").value;
+const seconds=Math.max(3,Math.min(15,Math.round(Number(sceneSeconds)||8)));
+if(Number(sceneSeconds)>15&&!confirm("fal permite clips de hasta 15 segundos en este modelo. Esta escena se generará en 15 segundos. ¿Continuar?"))return;
+const estimated=(seconds*(resolution==="1080p"?0.1229:0.0819)).toFixed(2);
+if(!confirm("Se generará un clip de "+seconds+" segundos en "+resolution+", vertical 9:16. Coste orientativo: US$"+estimated+". ¿Enviar a fal?"))return;
+target.textContent="Enviando escena a fal…";
+const job=await falRequest("/api/generate",{method:"POST",body:JSON.stringify({prompt,duration:seconds,resolution})});
+if(!job.request_id)throw new Error("El servidor no devolvió el identificador de generación.");
+target.textContent="Solicitud recibida. Esperando el video…";
+const url=await waitForFalJob("scene",job.request_id,msg=>target.textContent=msg);
+frutiVideos[key]=url;
+target.innerHTML='<p>✅ Video generado.</p><video controls playsinline style="width:100%;max-height:420px;border-radius:10px;background:#000" src="'+url+'"></video><p><a href="'+url+'" target="_blank" rel="noopener" style="color:#f4a4d4">Abrir / descargar MP4</a></p>';
+videoStatus("Clip listo. Puedes generar otras escenas y unirlas al terminar.");
+}catch(error){target.textContent="Error: "+error.message;videoStatus("No se pudo generar esta escena.");}
+}
+async function mergeStoryVideos(){
+const urls=Object.values(frutiVideos);
+const result=$("mergedVideoResult");
+if(urls.length<2){alert("Genera al menos dos escenas antes de unir el video.");return;}
+try{
+if(!videoApiBase()){alert("Configura primero la dirección del servidor seguro.");return;}
+result.textContent="Enviando los clips para unirlos…";
+const job=await falRequest("/api/merge",{method:"POST",body:JSON.stringify({video_urls:urls})});
+if(!job.request_id)throw new Error("El servidor no devolvió el identificador de montaje.");
+const url=await waitForFalJob("merge",job.request_id,msg=>result.textContent=msg);
+result.innerHTML='<p>✅ Video completo listo en MP4.</p><video controls playsinline style="width:100%;max-height:480px;border-radius:10px;background:#000" src="'+url+'"></video><p><a href="'+url+'" target="_blank" rel="noopener" style="color:#f4a4d4">Abrir / descargar video completo</a></p>';
+videoStatus("Montaje terminado. El MP4 está listo para publicar.");
+}catch(error){result.textContent="No se pudo unir el video: "+error.message;}
 }
 
 function copyText(text){
@@ -322,6 +401,7 @@ let projects=JSON.parse(localStorage.getItem("frutinovelaProjects")||"[]");
 $("saved").innerHTML=projects.length?projects.map((p,i)=>`<div class="scene"><b>Proyecto ${i+1}</b><p class="small">${p.date}</p><button class="secondary" onclick="copyText(${JSON.stringify(p.text)})">Copiar guion</button></div>`).join(""):'<p class="small">Todavía no tienes proyectos guardados.</p>';
 }
 loadProjects();
+const savedWorker=localStorage.getItem("frutiWorkerUrl");if(savedWorker)$("videoWorkerUrl").value=savedWorker;
 </script>
  <script>
 if ("serviceWorker" in navigator) {
