@@ -51,7 +51,7 @@ export default {
       const resolution = body.resolution === "1080p" ? "1080p" : "720p";
       if (!prompt || prompt.length > 7000) return json({ error: "El prompt debe tener entre 1 y 7000 caracteres." }, 400, origin);
       if (!Number.isInteger(duration) || duration < 3 || duration > 15) return json({ error: "La duración debe estar entre 3 y 15 segundos." }, 400, origin);
-      const response = await falFetch("https://queue.fal.run/" + FAL_MODEL_SCENE, env, {
+      const response = await falFetch("https://queue.fal.run/" + FAL_MODEL_SCENE + "?fal_max_queue_length=3", env, {
         method: "POST",
         body: JSON.stringify({ prompt, aspect_ratio: "9:16", resolution, duration })
       });
@@ -66,7 +66,7 @@ export default {
       if (urls.length < 2 || urls.length > 40 || !urls.every(validFalUrl)) {
         return json({ error: "Se requieren entre 2 y 40 clips alojados en fal CDN." }, 400, origin);
       }
-      const response = await falFetch("https://queue.fal.run/" + FAL_MODEL_MERGE, env, {
+      const response = await falFetch("https://queue.fal.run/" + FAL_MODEL_MERGE + "?fal_max_queue_length=3", env, {
         method: "POST",
         body: JSON.stringify({ video_urls: urls, target_fps: 24, resolution_aspect_ratio_video_index: 0 })
       });
