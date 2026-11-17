@@ -5,7 +5,7 @@ This Cloudflare Worker is the secure server-side bridge between the GitHub Pages
 ## Models and routes
 - `POST /api/image`: `fal-ai/nano-banana`, one PNG image, vertical 9:16.
 - `GET /api/status?jobType=image&id=...`: image queue status and URL.
-- `POST /api/generate`: `fal-ai/kling-video/v3/standard/image-to-video`, image-to-video, Standard, 3–15 seconds.
+- `POST /api/generate`: `fal-ai/kling-video/v3/turbo/standard/image-to-video`, image-to-video, Standard 720p, 3–15 seconds.
 - `GET /api/status?jobType=scene&id=...`: video queue status and MP4 URL.
 - `POST /api/merge`: joins generated clips in order.
 - `GET /api/status?jobType=merge&id=...`: merged MP4 URL.
@@ -31,6 +31,5 @@ This Cloudflare Worker is the secure server-side bridge between the GitHub Pages
 ## Important
 - Nano Banana creates the still image first. Kling animates that image; each scene requires both steps.
 - Standard export is vertical 9:16 at the Standard model tier. Duration is 3–15 seconds.
-- Native Kling audio is disabled because its documented speech support is Chinese and English; Spanish dialogue remains in the prompt, but the generated clip should be treated as silent until a Spanish voice/TTS track is added.
 - The Worker accepts only HTTPS media URLs hosted by fal storage.
 - CORS only allows the published GitHub Pages origin; it is not a replacement for Turnstile or rate limiting.
