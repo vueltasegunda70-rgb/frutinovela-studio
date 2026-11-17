@@ -18,9 +18,9 @@ The Worker deliberately refuses generation unless Cloudflare Turnstile is config
    npx wrangler secret put FAL_KEY
    npx wrangler secret put TURNSTILE_SECRET
    ```
-4. Add the Turnstile site key to the app's client-side challenge flow and include the one-time token as `turnstileToken` in both POST bodies. Do not put the Turnstile secret or fal key in the app.
-5. Add Cloudflare rate limiting for `/api/generate` and `/api/merge` before sharing the Worker URL publicly.
-6. Configure the Worker URL in Frutinovela Studio.
+4. Open Frutinovela Studio, paste the Turnstile **site key** into the new “Clave pública de Cloudflare Turnstile” field, and paste the Worker URL into “Dirección del servidor seguro”.
+5. The app obtains a one-time Turnstile token for each generation/merge request and sends it as `turnstileToken`. The Worker verifies it against `TURNSTILE_SECRET` and the expected app hostname.
+6. Add Cloudflare rate limiting for `/api/generate` and `/api/merge` before sharing the Worker URL publicly. Turnstile is an anti-abuse gate, not a substitute for usage limits.
 
 ## Local checks
 
