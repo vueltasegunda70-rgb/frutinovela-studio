@@ -33,6 +33,7 @@ button{border:0;border-radius:10px;padding:13px;font-size:14px;font-weight:bold;
 .small{font-size:12px;color:#bcaec8}
 footer{text-align:center;padding:20px;color:#a99bb5;font-size:12px}
 </style>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
 <header>
@@ -79,6 +80,10 @@ footer{text-align:center;padding:20px;color:#a99bb5;font-size:12px}
 <p class="small">Genera clips de tus escenas en vertical 9:16. La clave de fal se guarda únicamente en el servidor, nunca aquí.</p>
 <label>Dirección del servidor seguro (Worker URL)</label>
 <input id="videoWorkerUrl" type="url" placeholder="https://tu-worker.tu-cuenta.workers.dev">
+<label>Clave pública de Cloudflare Turnstile</label>
+<input id="videoTurnstileSiteKey" type="text" placeholder="Pega aquí la Site Key pública de Turnstile" autocomplete="off">
+<div id="videoTurnstileWidget" style="margin-top:10px"></div>
+<p class="small">La verificación protege las generaciones contra solicitudes automatizadas. La clave secreta y FAL_KEY permanecen únicamente en Cloudflare.</p>
 <label>Calidad de video</label>
 <select id="videoResolution"><option value="720p" selected>720p · recomendado</option><option value="1080p">1080p · mayor coste</option></select>
 <p class="small">Estimación orientativa del modelo: 720p ≈ US$0.0819 por segundo; 1080p ≈ US$0.1229 por segundo. Se cobra por generación exitosa. El precio puede cambiar.</p>
@@ -359,10 +364,67 @@ if(value)localStorage.setItem("frutiWorkerUrl",value);
 return value;
 }
 function videoStatus(message){const el=$("videoGlobalStatus");if(el)el.textContent=message;}
+let turnstileWidgetId=null;
+let turnstileWidgetSiteKey="";
+let turnstileResolve=null;
+let turnstileReject=null;
+function loadTurnstileScript(){
+  if(window.turnstile)return Promise.resolve();
+  return new Promise((resolve,reject)=>{
+    const existing=document.querySelector('script[src*="challenges.cloudflare.com/turnstile"]');
+    if(existing){
+      existing.addEventListener("load",resolve,{once:true});
+      existing.addEventListener("error",()=>reject(new Error("No se pudo cargar la verificación de Cloudflare.")),{once:true});
+      return;
+    }
+    const script=document.createElement("script");
+    script.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async=true;script.defer=true;
+    script.onload=resolve;
+    script.onerror=()=>reject(new Error("No se pudo cargar la verificación de Cloudflare."));
+    document.head.appendChild(script);
+  });
+}
+async function getTurnstileToken(){
+  const siteKey=$("videoTurnstileSiteKey").value.trim();
+  if(!siteKey)throw new Error("Primero crea el widget Turnstile en Cloudflare y pega aquí su clave pública.");
+  localStorage.setItem("frutiTurnstileSiteKey",siteKey);
+  await loadTurnstileScript();
+  if(!window.turnstile)throw new Error("Cloudflare Turnstile todavía no está disponible. Recarga la aplicación.");
+  const holder=$("videoTurnstileWidget");
+  if(turnstileWidgetId!==null&&turnstileWidgetSiteKey!==siteKey){
+    window.turnstile.remove(turnstileWidgetId);
+    holder.innerHTML="";
+    turnstileWidgetId=null;
+  }
+  if(turnstileWidgetId===null){
+    turnstileWidgetSiteKey=siteKey;
+    turnstileWidgetId=window.turnstile.render(holder,{
+      sitekey:siteKey,
+      execution:"execute",
+      appearance:"interaction-only",
+      callback:token=>{if(turnstileResolve){const done=turnstileResolve;turnstileResolve=null;turnstileReject=null;done(token);}},
+      "error-callback":()=>{if(turnstileReject){const fail=turnstileReject;turnstileResolve=null;turnstileReject=null;fail(new Error("Cloudflare no pudo completar la verificación. Inténtalo otra vez."));}},
+      "expired-callback":()=>{if(turnstileReject){const fail=turnstileReject;turnstileResolve=null;turnstileReject=null;fail(new Error("La verificación expiró. Vuelve a intentarlo."));}}
+    });
+  }
+  return new Promise((resolve,reject)=>{
+    turnstileResolve=resolve;turnstileReject=reject;
+    try{window.turnstile.reset(turnstileWidgetId);window.turnstile.execute(turnstileWidgetId);}
+    catch(error){turnstileResolve=null;turnstileReject=null;reject(new Error("No se pudo iniciar la verificación de seguridad."));}
+  });
+}
 async function falRequest(path,options={}){
 const base=videoApiBase();
 if(!base)throw new Error("Primero configura la dirección del servidor seguro.");
-const response=await fetch(base+path,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
+let requestOptions={...options};
+if((requestOptions.method||"GET").toUpperCase()==="POST"&&requestOptions.body){
+  let payload;
+  try{payload=JSON.parse(requestOptions.body);}catch(error){throw new Error("No se pudo preparar la solicitud de video.");}
+  payload.turnstileToken=await getTurnstileToken();
+  requestOptions.body=JSON.stringify(payload);
+}
+const response=await fetch(base+path,{...requestOptions,headers:{"Content-Type":"application/json",...(requestOptions.headers||{})}});
 const data=await response.json().catch(()=>({}));
 if(!response.ok)throw new Error(data.error||data.detail||"El servidor de video respondió con un error.");
 return data;
@@ -650,6 +712,7 @@ actions.append(open,download,edit,remove);card.append(title,date,preview,actions
 }
 loadProjects();
 const savedWorker=localStorage.getItem("frutiWorkerUrl");if(savedWorker)$("videoWorkerUrl").value=savedWorker;
+const savedTurnstileSiteKey=localStorage.getItem("frutiTurnstileSiteKey");if(savedTurnstileSiteKey)$("videoTurnstileSiteKey").value=savedTurnstileSiteKey;
 </script>
  <script>
 if ("serviceWorker" in navigator) {
