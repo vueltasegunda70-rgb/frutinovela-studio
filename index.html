@@ -100,12 +100,19 @@ footer{text-align:center;padding:20px;color:#a99bb5;font-size:12px}
 </select>
 <button class="primary" id="freeGenerate">🍓 CREAR LOTE DE FRUTINOVELAS</button>
 <p class="small" id="freeStatus" aria-live="polite">Cada historia tendrá 5 capítulos y 3 escenas por capítulo. Se guardarán automáticamente en Mis proyectos.</p>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">
+<a href="https://gemini.google.com/" target="_blank" rel="noopener" class="secondary" style="display:inline-block;text-decoration:none;padding:12px;border-radius:9px;color:white">🖼️ Abrir Gemini</a>
+<a href="https://klingai.com/" target="_blank" rel="noopener" class="secondary" style="display:inline-block;text-decoration:none;padding:12px;border-radius:9px;color:white">🎥 Abrir Kling AI</a>
+<a href="https://www.capcut.com/" target="_blank" rel="noopener" class="secondary" style="display:inline-block;text-decoration:none;padding:12px;border-radius:9px;color:white">✂️ Abrir CapCut</a>
+<a href="https://designer.microsoft.com/" target="_blank" rel="noopener" class="secondary" style="display:inline-block;text-decoration:none;padding:12px;border-radius:9px;color:white">🎨 Microsoft Designer</a>
+</div>
+<p class="small">Estas herramientas externas pueden ofrecer cuotas gratuitas limitadas; algunas funciones, exportaciones o generaciones pueden requerir créditos o un plan de pago. Copia los prompts del guion y pégalos en la herramienta elegida.</p>
 <div id="freeResults"></div>
 </section>
 
 <section class="card" id="videoStudio">
-<h2>🎨 Imágenes y videos con IA</h2>
-<p class="small">Nano Banana crea las imágenes; Kling AI Standard las anima. Formato vertical 9:16, exportación estándar 720p.</p>
+<h2>⚙️ Modo profesional opcional (puede tener costos)</h2>
+<p class="small">Esta conexión con fal.ai no es necesaria para el modo GRATIS. Úsala solo si más adelante decides pagar créditos para automatizar imágenes y videos.</p>
 <label>Dirección del servidor seguro (Cloudflare Worker URL)</label>
 <input id="videoWorkerUrl" type="url" placeholder="https://frutinovela-fal-api.tu-cuenta.workers.dev">
 <label>Clave pública de Cloudflare Turnstile</label>
