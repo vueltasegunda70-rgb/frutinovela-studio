@@ -476,7 +476,7 @@ videoStatus("Clip listo en 720p. Puedes generar otras escenas y unirlas al termi
 }catch(error){target.textContent="Error: "+error.message;videoStatus("No se pudo generar esta escena.");}
 }
 async function mergeStoryVideos(){
-const urls=Object.values(frutiVideos);
+const urls=Object.entries(frutiVideos).sort((a,b)=>{const x=a[0].match(/^c(\\d+)s(\\d+)$/)||[0,0,0];const y=b[0].match(/^c(\\d+)s(\\d+)$/)||[0,0,0];return Number(x[1])-Number(y[1])||Number(x[2])-Number(y[2]);}).map(entry=>entry[1]);
 const result=$("mergedVideoResult");
 if(urls.length<2){alert("Genera al menos dos escenas antes de unir el video.");return;}
 try{
