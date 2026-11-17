@@ -120,7 +120,7 @@ footer{text-align:center;padding:20px;color:#a99bb5;font-size:12px}
 <div id="videoTurnstileWidget" style="margin-top:10px"></div>
 <p class="small">La clave secreta FAL_KEY permanece en Cloudflare. Nunca la pegues en esta aplicación ni en GitHub.</p>
 <div id="videoGlobalStatus" class="small" aria-live="polite">Configura el Worker y Turnstile para activar la generación.</div>
-<button class="primary" style="margin-top:10px" onclick="mergeStoryVideos()">🎬 UNIR LOS CLIPS EN UN MP4</button>
+<button class="primary" style="margin-top:10px" onclick="mergeStoryVideos()">🎬 Exportación individual por capítulo</button>
 <div id="mergedVideoResult"></div>
 </section>
 
@@ -366,7 +366,7 @@ let html="";
 let full="FRUTINOVELA: "+name+"\nGÉNERO: "+genre+"\nPERSONAJES: "+chars.join(", ")+"\nIDEA CENTRAL: "+idea+"\n\n";
 for(let c=1;c<=chapters;c++){
 const chapter=plans[c-1];
-html+="<h3>📺 CAPÍTULO "+c+" — "+safe(["La señal","Las contradicciones","El precio de la verdad","Lo que ocultaba la familia","Frente a todos","Aliados por interés","La pieza desaparecida","Una decisión imposible","La última evidencia","Después de la verdad"][c-1])+"</h3>";
+html+='<div class="scene chapter-export"><h3>📺 CAPÍTULO '+c+' — '+safe(["La señal","Las contradicciones","El precio de la verdad","Lo que ocultaba la familia","Frente a todos","Aliados por interés","La pieza desaparecida","Una decisión imposible","La última evidencia","Después de la verdad"][c-1])+'</h3><button class="primary" onclick="exportChapterVideo('+c+')">🎬 Exportar solo este capítulo a MP4</button><div id="chapter-export-'+c+'" class="small" aria-live="polite"></div></div>';
 full+="CAPÍTULO "+c+"\n";
 const base=Math.floor(duration/4),extra=duration%4;
 chapter.forEach((beat,i)=>{
@@ -508,19 +508,33 @@ target.innerHTML='<p>✅ Video generado con Kling AI Standard.</p><video control
 videoStatus("Clip listo en 720p. Puedes generar otras escenas y unirlas al terminar.");
 }catch(error){target.textContent="Error: "+error.message;videoStatus("No se pudo generar esta escena.");}
 }
-async function mergeStoryVideos(){
-const urls=Object.entries(frutiVideos).sort((a,b)=>{const x=a[0].match(/^c(\\d+)s(\\d+)$/)||[0,0,0];const y=b[0].match(/^c(\\d+)s(\\d+)$/)||[0,0,0];return Number(x[1])-Number(y[1])||Number(x[2])-Number(y[2]);}).map(entry=>entry[1]);
-const result=$("mergedVideoResult");
-if(urls.length<2){alert("Genera al menos dos escenas antes de unir el video.");return;}
+async function exportChapterVideo(chapterNumber){
+const result=$("chapter-export-"+chapterNumber);
+if(!result)return;
+const entries=Object.entries(frutiVideos).filter(([key])=>{
+const match=key.match(/^c(\\d+)s(\\d+)$/);
+return match&&Number(match[1])===Number(chapterNumber);
+}).sort((a,b)=>Number((a[0].match(/s(\\d+)$/)||[])[1]||0)-Number((b[0].match(/s(\\d+)$/)||[])[1]||0));
+if(entries.length===0){result.textContent="Todavía no hay clips generados para este capítulo. Genera primero los videos de sus escenas.";return;}
+if(entries.length===1){
+const url=entries[0][1];
+result.innerHTML='<p>✅ Este capítulo tiene un clip. Puedes descargarlo directamente:</p><p><a href="'+url+'" target="_blank" rel="noopener" style="color:#f4a4d4">Abrir / descargar capítulo '+chapterNumber+' en MP4</a></p><video controls playsinline style="width:100%;max-height:420px;border-radius:10px;background:#000" src="'+url+'"></video>';
+return;
+}
 try{
-if(!videoApiBase()){alert("Configura primero la dirección del servidor seguro.");return;}
-result.textContent="Enviando los clips para unirlos…";
-const job=await falRequest("/api/merge",{method:"POST",body:JSON.stringify({video_urls:urls})});
+if(!videoApiBase()){alert("Configura primero el servidor seguro.");return;}
+result.textContent="Uniendo únicamente las "+entries.length+" escenas del capítulo "+chapterNumber+"…";
+const job=await falRequest("/api/merge",{method:"POST",body:JSON.stringify({video_urls:entries.map(entry=>entry[1])})});
 if(!job.request_id)throw new Error("El servidor no devolvió el identificador de montaje.");
 const url=await waitForFalJob("merge",job.request_id,msg=>result.textContent=msg);
-result.innerHTML='<p>✅ Video completo listo en MP4.</p><video controls playsinline style="width:100%;max-height:480px;border-radius:10px;background:#000" src="'+url+'"></video><p><a href="'+url+'" target="_blank" rel="noopener" style="color:#f4a4d4">Abrir / descargar video completo</a></p>';
-videoStatus("Montaje terminado. El MP4 está listo para publicar.");
-}catch(error){result.textContent="No se pudo unir el video: "+error.message;}
+result.innerHTML='<p>✅ Capítulo '+chapterNumber+' listo como MP4 independiente.</p><video controls playsinline style="width:100%;max-height:480px;border-radius:10px;background:#000" src="'+url+'"></video><p><a href="'+url+'" download="frutinovela-capitulo-'+chapterNumber+'.mp4" target="_blank" rel="noopener" style="color:#f4a4d4">⬇ Descargar capítulo '+chapterNumber+' en MP4</a></p>';
+videoStatus("Capítulo "+chapterNumber+" exportado. Puedes exportar otro capítulo por separado.");
+}catch(error){result.textContent="No se pudo exportar el capítulo: "+error.message;}
+}
+async function mergeStoryVideos(){
+const chapters=[...new Set(Object.keys(frutiVideos).map(key=>(key.match(/^c(\\d+)s/)||[])[1]).filter(Boolean))].sort((a,b)=>Number(a)-Number(b));
+if(!chapters.length){alert("Primero genera los videos de las escenas.");return;}
+alert("La exportación ahora se realiza capítulo por capítulo. Usa el botón «Exportar solo este capítulo a MP4» que aparece debajo del título de cada capítulo.");
 }
 
 async function copyText(text){
