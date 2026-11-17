@@ -1,35 +1,36 @@
-# Frutinovela Studio — fal video API
+# Frutinovela Studio — Nano Banana + Kling AI Standard
 
-This Worker is the server-side bridge between the GitHub Pages app and fal. It keeps `FAL_KEY` out of the browser and supports:
+This Cloudflare Worker is the secure server-side bridge between the GitHub Pages app and fal.ai. It keeps `FAL_KEY` out of the browser and GitHub.
 
-- `POST /api/generate`: Gemini Omni Flash 1.2 text-to-video, 9:16, 720p/1080p, 3–15 seconds.
-- `GET /api/status?jobType=scene&id=...`: queue status and MP4 URL.
-- `POST /api/merge`: joins generated clips in order with fal FFmpeg Merge.
+## Models and routes
+- `POST /api/image`: `fal-ai/nano-banana`, one PNG image, vertical 9:16.
+- `GET /api/status?jobType=image&id=...`: image queue status and URL.
+- `POST /api/generate`: `fal-ai/kling-video/v3/standard/image-to-video`, image-to-video, Standard, 3–15 seconds.
+- `GET /api/status?jobType=scene&id=...`: video queue status and MP4 URL.
+- `POST /api/merge`: joins generated clips in order.
 - `GET /api/status?jobType=merge&id=...`: merged MP4 URL.
 
-## Required security setup
-
-The Worker deliberately refuses generation unless Cloudflare Turnstile is configured. CORS alone is not authentication and does not prevent scripts from calling a public endpoint.
-
-1. In Cloudflare, create a Turnstile widget for `vueltasegunda70-rgb.github.io` and copy its **site key**.
-2. Deploy this Worker from this directory with Wrangler.
-3. Set secrets (never commit them):
+## Secure setup
+1. Create a fal.ai account and an API key at https://fal.ai/dashboard/keys. Add credits as needed.
+2. Create a Cloudflare account at https://dash.cloudflare.com/ if you do not already have one.
+3. Create a Turnstile widget for hostname `vueltasegunda70-rgb.github.io`; copy its **site key** and keep the **secret key** private.
+4. From this project folder, deploy the Worker:
+   ```sh
+   npx wrangler login
+   npx wrangler deploy
+   ```
+5. Add secrets without committing them:
    ```sh
    npx wrangler secret put FAL_KEY
    npx wrangler secret put TURNSTILE_SECRET
    ```
-4. Open Frutinovela Studio, paste the Turnstile **site key** into the new “Clave pública de Cloudflare Turnstile” field, and paste the Worker URL into “Dirección del servidor seguro”.
-5. The app obtains a one-time Turnstile token for each generation/merge request and sends it as `turnstileToken`. The Worker verifies it against `TURNSTILE_SECRET` and the expected app hostname.
-6. Add Cloudflare rate limiting for `/api/generate` and `/api/merge` before sharing the Worker URL publicly. Turnstile is an anti-abuse gate, not a substitute for usage limits.
-
-## Local checks
-
-```sh
-npx wrangler dev
-```
-
-The Worker only accepts the configured GitHub Pages origin. Update `APP_ORIGIN` if the app moves to a different domain.
+   Paste each secret only into the terminal prompt. Never put either secret in `index.html`, GitHub, chat, or the app.
+6. In Frutinovela Studio, paste the Worker URL and the Turnstile **site key** into the matching fields.
+7. Add Cloudflare rate limits for `/api/image`, `/api/generate`, and `/api/merge` before sharing the app publicly. Turnstile is an anti-abuse gate, not a usage quota.
 
 ## Important
-
-The current static app calls the endpoints above, but it does not yet render a Turnstile challenge or send `turnstileToken`. The backend is intentionally fail-closed until that client-side step is added. Deploying this Worker alone will not activate paid generation yet.
+- Nano Banana creates the still image first. Kling animates that image; each scene requires both steps.
+- Standard export is vertical 9:16 at the Standard model tier. Duration is 3–15 seconds.
+- Native Kling audio is disabled because its documented speech support is Chinese and English; Spanish dialogue remains in the prompt, but the generated clip should be treated as silent until a Spanish voice/TTS track is added.
+- The Worker accepts only HTTPS media URLs hosted by fal storage.
+- CORS only allows the published GitHub Pages origin; it is not a replacement for Turnstile or rate limiting.
