@@ -1,4 +1,4 @@
-const CACHE_NAME = "frutinovela-v12";
+const CACHE_NAME = "frutinovela-v13";
 
 const FILES = [
   "./",
