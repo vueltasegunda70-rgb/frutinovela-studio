@@ -75,6 +75,34 @@ footer{text-align:center;padding:20px;color:#a99bb5;font-size:12px}
 </section>
 
 
+
+<section class="card" id="freeFactory">
+<h2>🆓 Fábrica GRATIS de frutinovelas</h2>
+<p class="small">Crea varias historias por lote, sin API ni suscripciones. El generador funciona directamente en tu teléfono y guarda los proyectos en este dispositivo.</p>
+<label>Idea o tema general</label>
+<textarea id="freeIdea" placeholder="Ej.: dos frutas se enamoran, pero una herencia provoca una traición..."></textarea>
+<label>Género</label>
+<select id="freeGenre">
+<option value="Drama y secretos">Drama y secretos</option>
+<option value="Amor y romance">Amor y romance</option>
+<option value="Traición y venganza">Traición y venganza</option>
+<option value="Comedia">Comedia</option>
+<option value="Misterio">Misterio</option>
+<option value="Drama familiar">Drama familiar</option>
+</select>
+<label>Personajes</label>
+<input id="freeCharacters" value="Fresa, Manzana, Uva, Plátano">
+<label>¿Cuántas frutinovelas quieres crear?</label>
+<select id="freeBatch">
+<option value="1">1 historia</option>
+<option value="3" selected>3 historias</option>
+<option value="5">5 historias</option>
+</select>
+<button class="primary" id="freeGenerate">🍓 CREAR LOTE DE FRUTINOVELAS</button>
+<p class="small" id="freeStatus" aria-live="polite">Cada historia tendrá 5 capítulos y 3 escenas por capítulo. Se guardarán automáticamente en Mis proyectos.</p>
+<div id="freeResults"></div>
+</section>
+
 <section class="card" id="videoStudio">
 <h2>🎨 Imágenes y videos con IA</h2>
 <p class="small">Nano Banana crea las imágenes; Kling AI Standard las anima. Formato vertical 9:16, exportación estándar 720p.</p>
@@ -177,8 +205,7 @@ const plans=[
 ["EL NUEVO COMIENZO","El grupo recupera la confianza y abre una nueva etapa sin ocultar lo ocurrido.","Desde hoy, ninguna decisión se tomará a escondidas.","grupo unido al amanecer"],
 ["EL SECRETO QUE QUEDA","Una última llamada revela que alguien conservó una copia de la primera fotografía.","Creyeron que todo terminó... pero yo guardé el original.","teléfono sonando con fotografía misteriosa"]
 ]
-];
-const safe=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+];const safe=value=>String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const tone={
 "Amor y romance":"emociones románticas, miradas expresivas y tensión sentimental",
 "Traición y venganza":"suspenso, desconfianza y tensión dramática",
@@ -357,8 +384,7 @@ $("result").scrollIntoView({behavior:"smooth"});
 let frutiVideos={};
 let frutiImages={};
 function videoApiBase(){
-const value=$("videoWorkerUrl").value.trim().replace(/\/+$/,"");
-if(value)localStorage.setItem("frutiWorkerUrl",value);
+const value=$("videoWorkerUrl").value.trim().replace(/\/+$/,"");if(value)localStorage.setItem("frutiWorkerUrl",value);
 return value;
 }
 function videoStatus(message){const el=$("videoGlobalStatus");if(el)el.textContent=message;}
@@ -537,8 +563,7 @@ alert("¡Proyecto guardado! Puedes abrirlo o descargarlo desde Mis proyectos.");
 alert("No hay espacio suficiente en el almacenamiento del navegador. Descarga o elimina proyectos antiguos e inténtalo de nuevo.");
 }
 }
-function restoreProject(index){
-const project=readSavedProjects()[index];
+function restoreProject(index){const project=readSavedProjects()[index];
 if(!project)return;
 currentText=project.text;
 const output=$("output");
@@ -734,6 +759,8 @@ if ("serviceWorker" in navigator) {
   });
 }
  </script>
+
+<script src="./free-mode.js"></script>
 </body>
   
 
