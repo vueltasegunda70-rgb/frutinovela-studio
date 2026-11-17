@@ -1,4 +1,4 @@
-const CACHE_NAME = "frutinovela-v16";
+const CACHE_NAME = "frutinovela-v17";
 const FILES = ["./", "./index.html", "./manifest.json", "./free-mode.js"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES)));
