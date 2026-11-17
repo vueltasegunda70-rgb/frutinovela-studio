@@ -1,5 +1,5 @@
 const IMAGE_MODEL = "fal-ai/nano-banana";
-const VIDEO_MODEL = "fal-ai/kling-video/v3/standard/image-to-video";
+const VIDEO_MODEL = "fal-ai/kling-video/v3/turbo/standard/image-to-video";
 const MERGE_MODEL = "fal-ai/ffmpeg-api/merge-videos";
 const FAL_QUEUE = "https://queue.fal.run";
 
@@ -65,7 +65,7 @@ export default {
         if (!Number.isInteger(duration) || duration < 3 || duration > 15) return json({ error: "La duración debe ser de 3 a 15 segundos." }, 400, headers);
         const passed = await verifyTurnstile(body.turnstileToken, request, env.TURNSTILE_SECRET, env.APP_HOSTNAME || "vueltasegunda70-rgb.github.io");
         if (!passed) return json({ error: "Verificación de seguridad pendiente o inválida. Configura Turnstile antes de generar." }, 403, headers);
-        const result = await falFetch(`/${VIDEO_MODEL}`, env, { method: "POST", body: JSON.stringify({ prompt, start_image_url: imageUrl, duration: String(duration), generate_audio: false, enable_safety_checker: true, negative_prompt: "blur, distort, low quality, inconsistent character, extra limbs, duplicate characters, flicker, text, subtitles, watermark" }) });
+        const result = await falFetch(`/${VIDEO_MODEL}`, env, { method: "POST", body: JSON.stringify({ prompt, image_url: imageUrl, duration: String(duration), enable_safety_checker: true, negative_prompt: "blur, distort, low quality, inconsistent character, extra limbs, duplicate characters, flicker, text, subtitles, watermark" }) });
         if (!result.request_id) return json({ error: "fal no devolvió request_id para el video." }, 502, headers);
         return json({ request_id: result.request_id, model: VIDEO_MODEL }, 202, headers);
       }
