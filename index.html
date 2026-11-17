@@ -76,19 +76,16 @@ footer{text-align:center;padding:20px;color:#a99bb5;font-size:12px}
 
 
 <section class="card" id="videoStudio">
-<h2>🎞️ Estudio de video con fal</h2>
-<p class="small">Genera clips de tus escenas en vertical 9:16. La clave de fal se guarda únicamente en el servidor, nunca aquí.</p>
-<label>Dirección del servidor seguro (Worker URL)</label>
-<input id="videoWorkerUrl" type="url" placeholder="https://tu-worker.tu-cuenta.workers.dev">
+<h2>🎨 Imágenes y videos con IA</h2>
+<p class="small">Nano Banana crea las imágenes; Kling AI Standard las anima. Formato vertical 9:16, exportación estándar 720p.</p>
+<label>Dirección del servidor seguro (Cloudflare Worker URL)</label>
+<input id="videoWorkerUrl" type="url" placeholder="https://frutinovela-fal-api.tu-cuenta.workers.dev">
 <label>Clave pública de Cloudflare Turnstile</label>
 <input id="videoTurnstileSiteKey" type="text" placeholder="Pega aquí la Site Key pública de Turnstile" autocomplete="off">
 <div id="videoTurnstileWidget" style="margin-top:10px"></div>
-<p class="small">La verificación protege las generaciones contra solicitudes automatizadas. La clave secreta y FAL_KEY permanecen únicamente en Cloudflare.</p>
-<label>Calidad de video</label>
-<select id="videoResolution"><option value="720p" selected>720p · recomendado</option><option value="1080p">1080p · mayor coste</option></select>
-<p class="small">Estimación orientativa del modelo: 720p ≈ US$0.0819 por segundo; 1080p ≈ US$0.1229 por segundo. Se cobra por generación exitosa. El precio puede cambiar.</p>
-<div id="videoGlobalStatus" class="small" aria-live="polite">Configura el servidor seguro para activar la generación.</div>
-<button class="primary" style="margin-top:10px" onclick="mergeStoryVideos()">🎬 UNIR LOS CLIPS GENERADOS EN UN MP4</button>
+<p class="small">La clave secreta FAL_KEY permanece en Cloudflare. Nunca la pegues en esta aplicación ni en GitHub.</p>
+<div id="videoGlobalStatus" class="small" aria-live="polite">Configura el Worker y Turnstile para activar la generación.</div>
+<button class="primary" style="margin-top:10px" onclick="mergeStoryVideos()">🎬 UNIR LOS CLIPS EN UN MP4</button>
 <div id="mergedVideoResult"></div>
 </section>
 
@@ -346,7 +343,7 @@ const dialogue=beat[2];
 const prompt="Imagen cinematográfica 3D vertical 9:16. Ficha visual fija de los personajes: "+cast+". Protagonista de esta imagen: "+character+". Escena: "+beat[3]+". Acción congelada: "+action+". Tono: "+(tone[genre]||"drama cinematográfico")+". Expresiones legibles, composición dinámica, iluminación cuidada y fondo detallado. Mantener exactamente el mismo diseño visual en todas las escenas.";
 const videoPrompt=buildVideoPrompt(character,beat,seconds,c,i,genre);
 const title=beat[0];
-html+='<div class="scene"><h3>'+safe(title)+' · '+seconds+' segundos</h3><p><b>Personaje:</b> '+safe(character)+'</p><p><b>Acción:</b> '+safe(action)+'</p><p><b>Diálogo:</b> '+safe(character)+': "'+safe(dialogue)+'"</p><p><b>Prompt de imagen (puedes editarlo o pegar uno):</b></p><textarea class="prompt-edit" rows="5" style="width:100%;min-height:130px;box-sizing:border-box;white-space:pre-wrap" autocapitalize="sentences">'+safe(prompt)+'</textarea><button class="secondary" onclick="copyText(this.previousElementSibling.value)">Copiar prompt de imagen</button><p><b>Prompt de video (puedes editarlo o pegar uno):</b></p><textarea class="prompt-edit" rows="7" style="width:100%;min-height:170px;box-sizing:border-box;white-space:pre-wrap" autocapitalize="sentences">'+safe(videoPrompt)+'</textarea><button class="secondary" onclick="copyText(this.previousElementSibling.value)">Copiar prompt de video</button><button class="primary" onclick="generateSceneVideo(this.parentElement.querySelectorAll(\'.prompt-edit\')[1].value,'+JSON.stringify("c"+c+"s"+i)+','+seconds+')">🎥 Generar video de esta escena</button><div id="video-job-'+("c"+c+"s"+i)+'" class="video-job small"></div></div>';
+html+='<div class="scene"><h3>'+safe(title)+' · '+seconds+' segundos</h3><p><b>Personaje:</b> '+safe(character)+'</p><p><b>Acción:</b> '+safe(action)+'</p><p><b>Diálogo:</b> '+safe(character)+': "'+safe(dialogue)+'"</p><p><b>Prompt de imagen (puedes editarlo o pegar uno):</b></p><textarea class="prompt-edit" rows="5" style="width:100%;min-height:130px;box-sizing:border-box;white-space:pre-wrap" autocapitalize="sentences">'+safe(prompt)+'</textarea><button class="secondary" onclick="copyText(this.previousElementSibling.value)">Copiar prompt de imagen</button><button class="primary" onclick="generateSceneImage(this.parentElement.querySelectorAll('.prompt-edit')[0].value,'+JSON.stringify("c"+c+"s"+i)+')">🖼️ Crear imagen con Nano Banana</button><div id="image-job-'+("c"+c+"s"+i)+'" class="small"></div><p><b>Prompt de video (puedes editarlo o pegar uno):</b></p><textarea class="prompt-edit" rows="7" style="width:100%;min-height:170px;box-sizing:border-box;white-space:pre-wrap" autocapitalize="sentences">'+safe(videoPrompt)+'</textarea><button class="secondary" onclick="copyText(this.previousElementSibling.value)">Copiar prompt de video</button><button class="primary" onclick="generateSceneVideo(this.parentElement.querySelectorAll(\'.prompt-edit\')[1].value,'+JSON.stringify("c"+c+"s"+i)+','+seconds+')">🎥 Generar video de esta escena</button><div id="video-job-'+("c"+c+"s"+i)+'" class="video-job small"></div></div>';
 full+=title+"\n"+action+"\n"+character+": "+dialogue+"\nPROMPT DE IMAGEN: "+prompt+"\nPROMPT DE VIDEO: "+videoPrompt+"\n\n";
 });
 }
@@ -358,6 +355,7 @@ $("result").scrollIntoView({behavior:"smooth"});
 
 
 let frutiVideos={};
+let frutiImages={};
 function videoApiBase(){
 const value=$("videoWorkerUrl").value.trim().replace(/\/+$/,"");
 if(value)localStorage.setItem("frutiWorkerUrl",value);
@@ -429,39 +427,52 @@ const data=await response.json().catch(()=>({}));
 if(!response.ok)throw new Error(data.error||data.detail||"El servidor de video respondió con un error.");
 return data;
 }
-async function waitForFalJob(jobType,requestId,onUpdate){
+async function waitForFalJob(jobType,requestId,onUpdate,resultField="video_url"){
 for(let attempt=0;attempt<180;attempt++){
 const data=await falRequest("/api/status?jobType="+encodeURIComponent(jobType)+"&id="+encodeURIComponent(requestId),{method:"GET",headers:{}});
 if(data.status==="COMPLETED"){
 if(data.error)throw new Error(data.error);
-if(!data.video_url)throw new Error("La generación terminó, pero no llegó la dirección del MP4.");
-return data.video_url;
+if(!data[resultField])throw new Error("La generación terminó, pero no llegó el archivo solicitado.");
+return data[resultField];
 }
-onUpdate(data.status==="IN_QUEUE"?"En cola de generación…":"Generando video con fal…");
+onUpdate(data.status==="IN_QUEUE"?"En cola de generación…":"Generando con "+(jobType==="image"?"Nano Banana":"Kling AI")+"…");
 await new Promise(resolve=>setTimeout(resolve,5000));
 }
 throw new Error("La generación está tardando más de lo esperado. Puedes volver a consultar el estado.");
+}
+async function generateSceneImage(prompt,key){
+const target=$("image-job-"+key);
+if(!target)return;
+try{
+if(!videoApiBase()){alert("Configura primero la dirección del servidor seguro. No pegues tu clave API aquí.");return;}
+if(!confirm("Nano Banana creará una imagen vertical 9:16 para esta escena. ¿Continuar?"))return;
+target.textContent="Enviando imagen a Nano Banana…";
+const job=await falRequest("/api/image",{method:"POST",body:JSON.stringify({prompt})});
+if(!job.request_id)throw new Error("El servidor no devolvió el identificador de imagen.");
+const imageUrl=await waitForFalJob("image",job.request_id,msg=>target.textContent=msg,"image_url");
+frutiImages[key]=imageUrl;
+target.innerHTML='<p>✅ Imagen creada. Se usará como primer fotograma de Kling AI.</p><img alt="Imagen de la escena" src="'+imageUrl+'" style="width:100%;max-height:420px;object-fit:contain;border-radius:10px;background:#000">';
+videoStatus("Imagen lista. Ahora puedes animarla con Kling AI.");
+}catch(error){target.textContent="Error: "+error.message;videoStatus("No se pudo crear la imagen.");}
 }
 async function generateSceneVideo(prompt,key,sceneSeconds){
 const target=$("video-job-"+key);
 if(!target)return;
 try{
-const base=videoApiBase();
-if(!base){alert("Antes de generar, debemos configurar el servidor seguro de fal. No introduzcas tu clave API aquí.");return;}
-const resolution=$("videoResolution").value;
+if(!videoApiBase()){alert("Configura el servidor seguro. No introduzcas tu clave API aquí.");return;}
+const imageUrl=frutiImages[key];
+if(!imageUrl){alert("Primero crea la imagen de esta escena con Nano Banana.");return;}
 const seconds=Math.max(3,Math.min(15,Math.round(Number(sceneSeconds)||8)));
-if(Number(sceneSeconds)>15&&!confirm("fal permite clips de hasta 15 segundos en este modelo. Esta escena se generará en 15 segundos. ¿Continuar?"))return;
-const estimated=(seconds*(resolution==="1080p"?0.1229:0.0819)).toFixed(2);
-if(!confirm("Se generará un clip de "+seconds+" segundos en "+resolution+", vertical 9:16. Coste orientativo: US$"+estimated+". ¿Enviar a fal?"))return;
-target.textContent="Enviando escena a fal…";
-const requestPrompt=prompt.replace(/Duración:\s*\d+\s*segundos/i,"Duración: "+seconds+" segundos")+"\\nDURACIÓN DE SALIDA OBLIGATORIA: "+seconds+" segundos exactos. Ajustar proporcionalmente los tiempos de la secuencia a esta duración, sin cambiar el diálogo literal ni la emoción.";
-const job=await falRequest("/api/generate",{method:"POST",body:JSON.stringify({prompt:requestPrompt,duration:seconds,resolution})});
+if(Number(sceneSeconds)>15&&!confirm("Kling Standard permite hasta 15 segundos. Esta escena se generará en 15 segundos. ¿Continuar?"))return;
+if(!confirm("Kling AI Standard animará esta imagen en vertical 9:16, calidad estándar 720p, durante "+seconds+" segundos. ¿Enviar a generar?"))return;
+target.textContent="Enviando imagen a Kling AI…";
+const job=await falRequest("/api/generate",{method:"POST",body:JSON.stringify({prompt,image_url:imageUrl,duration:seconds})});
 if(!job.request_id)throw new Error("El servidor no devolvió el identificador de generación.");
 target.textContent="Solicitud recibida. Esperando el video…";
 const url=await waitForFalJob("scene",job.request_id,msg=>target.textContent=msg);
 frutiVideos[key]=url;
-target.innerHTML='<p>✅ Video generado.</p><video controls playsinline style="width:100%;max-height:420px;border-radius:10px;background:#000" src="'+url+'"></video><p><a href="'+url+'" target="_blank" rel="noopener" style="color:#f4a4d4">Abrir / descargar MP4</a></p>';
-videoStatus("Clip listo. Puedes generar otras escenas y unirlas al terminar.");
+target.innerHTML='<p>✅ Video generado con Kling AI Standard.</p><video controls playsinline style="width:100%;max-height:420px;border-radius:10px;background:#000" src="'+url+'"></video><p><a href="'+url+'" target="_blank" rel="noopener" style="color:#f4a4d4">Abrir / descargar MP4</a></p>';
+videoStatus("Clip listo en 720p. Puedes generar otras escenas y unirlas al terminar.");
 }catch(error){target.textContent="Error: "+error.message;videoStatus("No se pudo generar esta escena.");}
 }
 async function mergeStoryVideos(){
