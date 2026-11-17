@@ -19,8 +19,8 @@ function corsHeaders(origin, allowedOrigin) {
   };
 }
 
-async function verifyTurnstile(token, request, secret) {
-  if (!token || !secret) return false;
+async function verifyTurnstile(token, request, secret, expectedHostname) {
+  if (!token || !secret || !expectedHostname) return false;
   const form = new FormData();
   form.append("secret", secret);
   form.append("response", token);
@@ -32,8 +32,7 @@ async function verifyTurnstile(token, request, secret) {
   });
   if (!response.ok) return false;
   const result = await response.json();
-  const hostname = new URL(request.url).hostname;
-  return result.success === true && (!result.hostname || result.hostname === hostname);
+  return result.success === true && result.hostname === expectedHostname;
 }
 
 async function falFetch(path, env, init = {}) {
@@ -82,7 +81,7 @@ export default {
         if (!prompt || prompt.length > 12000) return json({ error: "El prompt debe tener entre 1 y 12,000 caracteres." }, 400, headers);
         if (!Number.isInteger(duration) || duration < 3 || duration > 15) return json({ error: "La duración debe ser de 3 a 15 segundos." }, 400, headers);
         if (!["720p", "1080p"].includes(resolution)) return json({ error: "Calidad no permitida. Usa 720p o 1080p." }, 400, headers);
-        const passed = await verifyTurnstile(body.turnstileToken, request, env.TURNSTILE_SECRET);
+        const passed = await verifyTurnstile(body.turnstileToken, request, env.TURNSTILE_SECRET, env.APP_HOSTNAME || "vueltasegunda70-rgb.github.io");
         if (!passed) return json({ error: "Verificación de seguridad pendiente o inválida. Configura Turnstile antes de generar." }, 403, headers);
 
         const result = await falFetch(`/${VIDEO_MODEL}`, env, {
@@ -104,7 +103,7 @@ export default {
         if (videoUrls.length < 2 || videoUrls.length > 40 || videoUrls.some((item) => typeof item !== "string" || !/^https:\/\/(v3b?\.fal\.media|fal\.media)\//.test(item))) {
           return json({ error: "Envía entre 2 y 40 clips MP4 generados en fal." }, 400, headers);
         }
-        const passed = await verifyTurnstile(body.turnstileToken, request, env.TURNSTILE_SECRET);
+        const passed = await verifyTurnstile(body.turnstileToken, request, env.TURNSTILE_SECRET, env.APP_HOSTNAME || "vueltasegunda70-rgb.github.io");
         if (!passed) return json({ error: "Verificación de seguridad pendiente o inválida. Configura Turnstile antes de unir." }, 403, headers);
 
         const result = await falFetch(`/${MERGE_MODEL}`, env, {
